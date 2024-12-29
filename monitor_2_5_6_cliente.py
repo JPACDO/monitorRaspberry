@@ -11,6 +11,7 @@ import matplotlib.animation as animation
 import random
 from scipy import signal
 import time
+#from datetime import datetime
 import serial
 import threading
 import serial.tools.list_ports
@@ -26,7 +27,11 @@ from scipy.signal import argrelextrema
 import socket
 import pickle
 
-
+#from playsound import playsound
+from gpiozero import Buzzer
+import time
+from tkinter import messagebox as MessageBox
+import sys
 
 #---------End of imports
 ####2_2 voy a oprobar a recibir dato de 1 en 1
@@ -36,17 +41,16 @@ import pickle
 ####2_4_0   grafico para respiracion y presion muestra
 ####2_4_1   añado otro puerto com para presion
 ####2_5_0_emisor envia datos a firebase/ receptor recibe datos de firebase
-####2_5_2_servidor es el servidor, aqui le pongo para ingresar manual la ip
-####2_5_3_servidor lo configuro para poder usar solo un puerto si es necesario
-####2_5_4_servidorrecibe mas datos en pulso (ahora solo Ir,RED  quiero IR,REd,IR,red,Ir,red... para que se vea mejor la onda)
-####2_5_5_servidor envia por puerto serie los datos a un arduino que muestra en un ldc
-####2_5_7_servidor para el de la presion se pone un boton de iniciar y tiempo
-
+####2_5_2_cliente es el cliente del servidor, aqui le pongo para ingresar manual la ip
+####2_5_3_cliente le pongo la funcion de poner una alarma cunado un parametro salga de lo normal
+####2_5_4_cliente de momento solo para emparejar con el servidor
+####2_5_4_cliente le oloco un tiempo minimo que debe haber entre alarmas para que no suene todo el tiempo
 
 FONDO = 'black'
 TEXTCOL = "white"
 ports = serial.tools.list_ports.comports(include_links=False)
 puertos = []
+buzzer = Buzzer(17)
 fontSize = 8 # tamano letra cuadros titulos
 fontSize2 = 15 #tamano letra contenido valor del cuadro
 
@@ -54,11 +58,11 @@ class Window(Frame):
 
     def __init__(self, master = None, puertos = None, baudios = 9600,
                  #dimension = 800, dim_array = 10,dpi = 100,     ##config para ecg
-                 dimension = 750*2, dim_array = 15,dpi = 50,
+                 dimension = 750*2, dim_array = 15,dpi = 70,
                  dim_red_ir = 100, 
-                 dimension2 = 50*2, dim_array2 = 5,dpi2 = 50,     ##config para pulso dim_array2 = 1
+                 dimension2 = 50*2, dim_array2 = 1,dpi2 = 70,     ##config para pulso
                  dim_array3 = 10,                               ##config temp
-                 dimension4 = 50*2, dim_array4 = 1,dpi4 = 50,     ##config para resp
+                 dimension4 = 50*2, dim_array4 = 1,dpi4 = 70,     ##config para resp
                  ip = "", port = 1234,
                  FONDO = None, TEXTCOL = None):
         Frame.__init__(self, master)
@@ -96,7 +100,6 @@ class Window(Frame):
         self.y = np.zeros(self.eje_x)   #datos ECG
         #self.y[:] = np.nan
         self.y2 = np.zeros(self.eje_x2)  #datos SPO PULSO
-        self.suma = np.zeros(self.dim_array2) ##datos para clacular el spo
         #self.y2[:] = np.nan
         self.y4 = np.zeros(self.eje_x4)  #datos RESP
         #self.y4[:] = np.nan
@@ -112,35 +115,77 @@ class Window(Frame):
         self.resp_val.set('-')
         self.presion_val = tk.StringVar()           #variable valor presion sis/dias
         self.presion_val.set('-/-')
-
-        self.tiempoP = tk.StringVar()                 #variable para controlar el tiempo del motor de presion
-        self.tiempoP.set("0")
         
         self.h = 2
-        self.w = 7
+        self.w = 9
         print(self.h,self.w)
 
         self.ip = ip
         self.port = port
 
-        self.inicarSocket = 1
+        self.hrMin = tk.StringVar()
+        self.hrMin.set("50")
+        self.hrMax = tk.StringVar()
+        self.hrMax.set("150")
+        self.pulsoMin = tk.StringVar()
+        self.pulsoMin.set("50")
+        self.pulsoMax = tk.StringVar()
+        self.pulsoMax.set("150")
+        self.spoMin = tk.StringVar()
+        self.spoMin.set("95")
+        self.spoMax = tk.StringVar()
+        self.spoMax.set("100")
+        self.tempMin = tk.StringVar()
+        self.tempMin.set("34")
+        self.tempMax = tk.StringVar()
+        self.tempMax.set("38")
+        self.respMin = tk.StringVar()
+        self.respMin.set("12")
+        self.respMax = tk.StringVar()
+        self.respMax.set("10")
+        self.presionSisMin = tk.StringVar()
+        self.presionSisMin.set("160")
+        self.presionSisMax = tk.StringVar()
+        self.presionSisMax.set("100")
+        self.presionDiaMin = tk.StringVar()
+        self.presionDiaMin.set("100")
+        self.presionDiaMax = tk.StringVar()
+        self.presionDiaMax.set("60")
+
+        self.reproducirArlarma = True
+        self.hora  = 0
         
+        self.filewinA = tk.Toplevel()
+        self.filewinA.destroy()
+        
+        self.menu_top()
         self.init_window()
         #self.bind("<Configure>",  self.resize)   #####efecto de cambiar de tamaño plot segun tamaño ventana
         self.master.bind('<Escape>', lambda e: self.salida())
         self.master.protocol("WM_DELETE_WINDOW", self.salida)
+
+
+        self.tiempoanterior = 0
+        self.tiempoactual = time.time() #datetime.now()
+        self.lapsoMinAlarma = tk.StringVar() #30segundos de tiempo minimo entre alarmas
+        self.lapsoMinAlarma.set("30")
     ################################################################
     def salida(self):
-
+        '''
         if (self.define == 1):
             self.ser.close()
             self.ser2.close()
             self.ser3.close()
             self.ser4.close()
             print ('serial close')
+        '''
         print('salida')
+
+        self.define=0
+        #self.hilo5.join()
         self.master.quit()
         self.master.destroy()
+        sys.exit()
     ################################################################
     def resize(self,event):
         #self.i_resize = 1 - self.i_resize
@@ -234,13 +279,150 @@ class Window(Frame):
                                            interval=50, blit=False)
         self.ani4 = animation.FuncAnimation(self.fig4, self.animate4,
                                            interval=50, blit=False)
-    ################################################################   
+    ################################################################
+    def editar_title(self):
+
+        try:
+            print(self.filewinIP.winfo_exists())
+            self.filewinIP.destroy()
+        except:
+            pass
+        
+        self.filewinIP = tk.Toplevel()
+        self.filewinIP.resizable (False, False)
+
+        #filewinIP.resizable (False, False)
+        
+        IZQframe = tk.Frame(self.filewinIP)
+        IZQframe.pack(padx=10, pady=5)
+
+        lbConfIzq= tk.Label(IZQframe, text = "CONFIGURACION HR", font=(None,10,'bold'))
+        lbConfIzq.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPIzq= tk.Label(IZQframe, text = "MIN: ")
+        lbIPIzq.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPIzq = tk.Entry(IZQframe, textvariable =  self.hrMin, borderwidth=5,width="20")
+        teIPIzq.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortIzq= tk.Label(IZQframe, text = "MAX: ")
+        lbPortIzq.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortIzq = tk.Entry(IZQframe, textvariable = self.hrMax, borderwidth=5,width="5")
+        tePortIzq.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+        DERframe = tk.Frame(self.filewinIP)
+        DERframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(DERframe, text = "CONFIGURACION PULSO", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(DERframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(DERframe, textvariable = self.pulsoMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(DERframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(DERframe, textvariable = self.pulsoMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+
+        SPOframe = tk.Frame(self.filewinIP)
+        SPOframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(SPOframe, text = "CONFIGURACION SPO", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(SPOframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(SPOframe, textvariable = self.spoMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(SPOframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(SPOframe, textvariable = self.spoMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+        TEMPframe = tk.Frame(self.filewinIP)
+        TEMPframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(TEMPframe, text = "CONFIGURACION TEMP", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(TEMPframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(TEMPframe, textvariable = self.tempMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(TEMPframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(TEMPframe, textvariable = self.tempMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+        RESPframe = tk.Frame(self.filewinIP)
+        RESPframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(RESPframe, text = "CONFIGURACION RESP", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(RESPframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(RESPframe, textvariable = self.respMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(RESPframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(RESPframe, textvariable = self.respMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        
+        SISframe = tk.Frame(self.filewinIP)
+        SISframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(SISframe, text = "CONFIGURACION PRESION SISTOLICA", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(SISframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(SISframe, textvariable = self.presionSisMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(SISframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(SISframe, textvariable = self.presionSisMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+        DIAframe = tk.Frame(self.filewinIP)
+        DIAframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(DIAframe, text = "CONFIGURACION PRESION DIASTOLICA", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(DIAframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(DIAframe, textvariable = self.presionDiaMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(DIAframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(DIAframe, textvariable = self.presionDiaMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        
+        ALARframe = tk.Frame(self.filewinIP)
+        ALARframe.pack(padx=10, pady=5)
+
+        lbConfAlar= tk.Label(ALARframe, text = "CONFIGURACION TIEMPO ENTRE ALARMAS", font=(None,10,'bold'))
+        lbConfAlar.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPConfAlar= tk.Label(ALARframe, text = "SEG: ")
+        lbIPConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teConfAlar = tk.Entry(ALARframe, textvariable = self.lapsoMinAlarma, borderwidth=5,width="20")
+        teConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+##        buttonCon = tk.Button(filewinIP,text="GUARDAR CAMBIOS",command = lambda:config_general())
+##        buttonCon.pack(expand=True, pady=10,side = tk.LEFT)
+
+    ################################################################        
+    def menu_top(self):
+        menubar = tk.Menu(self)
+        filemenu = tk.Menu(menubar, tearoff=0)
+
+        filemenu.add_command(label="CONFIGURAR ALARMA", command=self.editar_title)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.salida)
+        menubar.add_cascade(label="Menú", menu=filemenu)
+        
+        self.master.config(menu=menubar)
+    ################################################################
     def init_window(self):
 
-        self.master.title("'A - MONITOR MULTIVARIABLE e- T'")
+        self.master.title("'A - MONITOR MULTIVARIABLE r- T'")
         self.pack(fill='both', expand=1)     
 
-        '''
+
         # Frame horizontal 1 grafico y parametros ECG/PULSO
         fm1 = tk.Frame(self,highlightbackground="red",
                        highlightthickness=1)
@@ -294,7 +476,7 @@ class Window(Frame):
                  rowspan = 1,
                  columnspan = 1,
                  padx=1, pady=1)
-        '''
+
 
         # Frame para config 
         fm4 = tk.Frame(self)
@@ -304,7 +486,7 @@ class Window(Frame):
                  columnspan = 9,
                  padx=5, pady=10)
 
-        '''
+
         # Frame horizontal 3 grafico y parametros RESP/PRESION
         fm6 = tk.Frame(self,highlightbackground="red",
                        highlightthickness=1)
@@ -332,7 +514,7 @@ class Window(Frame):
                  columnspan = 1,
                  padx=1, pady=1)
 
-        
+
         #DATOS PARA FM2 ------------------------------
         #----------------------------------------------
 
@@ -341,12 +523,12 @@ class Window(Frame):
                              bg=self.FONDO,font=(None,fontSize,'bold'),
                              fg=self.TEXTCOL)
         self.labelHR.grid(row=0,column=0, rowspan = 2)
-        self.labelHRmax = Label(fm2,text="120",width=self.acho_wg,
+        self.labelHRmax = Label(fm2,textvariable=self.hrMax,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                 fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
         self.labelHRmax.grid(row=2,column=0, sticky = tk.W)
-        self.labelHRmin = Label(fm2,text="50",width=self.acho_wg,
+        self.labelHRmin = Label(fm2,textvariable=self.hrMin,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                 fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
@@ -366,12 +548,12 @@ class Window(Frame):
                              bg=self.FONDO,font=(None,fontSize,'bold'),
                               fg=self.TEXTCOL)
         self.labelSPO.grid(row=0,column=0, rowspan = 2)
-        self.labelSPOmax = Label(fm3,text="100",width=self.acho_wg,
+        self.labelSPOmax = Label(fm3,textvariable=self.spoMax,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
         self.labelSPOmax.grid(row=2,column=0, sticky = tk.W)
-        self.labelSPOmin = Label(fm3,text="90",width=self.acho_wg,
+        self.labelSPOmin = Label(fm3,textvariable=self.spoMin,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
@@ -391,11 +573,29 @@ class Window(Frame):
                               fg=self.TEXTCOL,
                                anchor="e",justify=tk.LEFT)
         self.labelPULSO.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
-        self.labelPULSOval = Label(fm2_3,textvariable=self.pulso_val,width=int(self.acho_wg),
-                                font=(None,fontSize2,'bold'),bg=self.FONDO,
+
+
+        self.labelPULSOmax = Label(fm2_3,textvariable=self.pulsoMax,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
-        self.labelPULSOval.grid(row=1,column=0, sticky = tk.W)
+        self.labelPULSOmax.grid(row=2,column=0, sticky = tk.W)
+        self.labelPULSOmin = Label(fm2_3,textvariable=self.pulsoMin,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
+                                 fg=self.TEXTCOL,
+                                anchor="e",justify=tk.RIGHT)
+        self.labelPULSOmin.grid(row=3,column=0, sticky = tk.W)
+        
+        self.textPULSOval = Label(fm2_3,textvariable=self.pulso_val,width=int(self.acho_wg/2),
+                               bg=self.FONDO, font=(None,fontSize2,'bold'),
+                                fg=self.TEXTCOL)
+        self.textPULSOval.grid(row=0,column=1, rowspan = 4)
+        
+##        self.labelPULSOval = Label(fm2_3,textvariable=self.pulso_val,width=int(self.acho_wg),
+##                                font=(None,25,'bold'),bg=self.FONDO,
+##                                 fg=self.TEXTCOL,
+##                                anchor="e",justify=tk.RIGHT)
+##        self.labelPULSOval.grid(row=1,column=0, sticky = tk.W)
 
         #DATOS PARA FM5_3 ------------------------------
         #----------------------------------------------
@@ -406,11 +606,29 @@ class Window(Frame):
                               fg=self.TEXTCOL,
                                 anchor="e",justify=tk.LEFT)
         self.labelTEMP.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
-        self.labelTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg),
-                                font=(None,fontSize2,'bold'),bg=self.FONDO,
+
+
+        self.labelTEMPmax = Label(fm5_3,textvariable=self.tempMax,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
-        self.labelTEMPval.grid(row=1, column=0, sticky = tk.W)
+        self.labelTEMPmax.grid(row=2,column=0, sticky = tk.W)
+        self.labelTEMPmin = Label(fm5_3,textvariable=self.tempMin,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
+                                 fg=self.TEXTCOL,
+                                anchor="e",justify=tk.RIGHT)
+        self.labelTEMPmin.grid(row=3,column=0, sticky = tk.W)
+        
+        self.textTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg/2),
+                               bg=self.FONDO, font=(None,fontSize2,'bold'),
+                                fg=self.TEXTCOL)
+        self.textTEMPval.grid(row=0,column=1, rowspan = 4)
+        
+##        self.labelTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg),
+##                                font=(None,25,'bold'),bg=self.FONDO,
+##                                 fg=self.TEXTCOL,
+##                                anchor="e",justify=tk.RIGHT)
+##        self.labelTEMPval.grid(row=1, column=0, sticky = tk.W)
 
         #DATOS PARA FM6_1 ------------------------------
         #----------------------------------------------
@@ -421,11 +639,29 @@ class Window(Frame):
                               fg=self.TEXTCOL,
                                 anchor="e",justify=tk.LEFT)
         self.labelRESP.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
-        self.labelRESPval = Label(fm6_1,textvariable=self.resp_val,width=int(self.acho_wg),
-                                font=(None,fontSize2,'bold'),bg=self.FONDO,
+
+
+        self.labelRESPmax = Label(fm6_1,textvariable=self.respMax,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 anchor="e",justify=tk.RIGHT)
-        self.labelRESPval.grid(row=1, column=0, sticky = tk.W)
+        self.labelRESPmax.grid(row=2,column=0, sticky = tk.W)
+        self.labelRESPmin = Label(fm6_1,textvariable=self.respMin,width=self.acho_wg,
+                                font=(None,fontSize,'bold'),bg=self.FONDO,
+                                 fg=self.TEXTCOL,
+                                anchor="e",justify=tk.RIGHT)
+        self.labelRESPmin.grid(row=3,column=0, sticky = tk.W)
+        
+        self.textRESPval = Label(fm6_1,textvariable=self.resp_val,width=int(self.acho_wg/2),
+                               bg=self.FONDO, font=(None,fontSize2,'bold'),
+                                fg=self.TEXTCOL)
+        self.textRESPval.grid(row=0,column=1, rowspan = 4)
+        
+##        self.labelRESPval = Label(fm6_1,textvariable=self.resp_val,width=int(self.acho_wg),
+##                                font=(None,25,'bold'),bg=self.FONDO,
+##                                 fg=self.TEXTCOL,
+##                                anchor="e",justify=tk.RIGHT)
+##        self.labelRESPval.grid(row=1, column=0, sticky = tk.W)
         #DATOS PARA FM6_2 ------------------------------
         #----------------------------------------------
 
@@ -454,7 +690,7 @@ class Window(Frame):
 ##        self.buttonClear.bind(lambda e:self.Clear)
 
         fd = dict(
-            fontsize=fontSize, # [ size in points | relative size, e.g., 'smaller', 'x-large' ]
+            fontsize=15, # [ size in points | relative size, e.g., 'smaller', 'x-large' ]
             fontweight='bold', # [ 'normal' | 'bold' | 'heavy' | 'light' | 'ultrabold' | 'ultralight']
             fontstyle='normal', # [ 'normal' | 'italic' | 'oblique' ]
             color='black', # name ex: 'black' or hex ex: '#30302f'
@@ -479,7 +715,7 @@ class Window(Frame):
         self.canvas4 = FigureCanvasTkAgg(self.fig4, master=fm6)
         self.canvas4.get_tk_widget().grid(column=0,row=0,# columnspan = 6,
                                           rowspan = 2)
-        
+
         self.go()
         '''
         #CONEXION SERIAL ------------------------------
@@ -491,34 +727,34 @@ class Window(Frame):
         self.lbpuerto.grid(sticky='W',row=0,column=6) #,padx=20)
         #########
         self.portser = tk.StringVar()
-        self.portser.set("SELECCIONA")
+        self.portser.set("SELECCIONA1")
         campport = tk.ttk.Combobox(fm4, textvariable = self.portser,
                                    width= 12)#self.acho_wg)
         campport.grid(row=0,column=7)#,padx=20)
         campport["values"] = self.ports
         #########
         self.portser2 = tk.StringVar()
-        self.portser2.set("SELECCIONA")
+        self.portser2.set("SELECCIONA2")
         campport2 = tk.ttk.Combobox(fm4, textvariable = self.portser2,
                                    width= 12)#self.acho_wg)
         campport2.grid(row=0,column=8)#,padx=20)
         campport2["values"] = self.ports
         #########
         self.portser3 = tk.StringVar()
-        self.portser3.set("SELECCIONA")
+        self.portser3.set("SELECCIONA3")
         campport3 = tk.ttk.Combobox(fm4, textvariable = self.portser3,
                                    width= 12)#self.acho_wg)
         campport3.grid(row=0,column=9)#,padx=20)
         campport3["values"] = self.ports
         #########
         self.portser4 = tk.StringVar()
-        self.portser4.set("SELECCIONA")
+        self.portser4.set("SELECCIONA3")
         campport4 = tk.ttk.Combobox(fm4, textvariable = self.portser4,
                                    width= 12)#self.acho_wg)
         campport4.grid(row=0,column=10)#,padx=20)
         campport4["values"] = self.ports
 
-        
+        '''
         if (self.define == 1):
             estado = "DESCONECTAR"
         else:
@@ -529,7 +765,7 @@ class Window(Frame):
                           command=lambda: self.conexion())
         self.b1.grid(row=0,column=11, sticky = tk.W,padx=20)
 
-
+        '''
         if (self.define2 == 1):
             estado2 = "STOP"
         else:
@@ -539,15 +775,7 @@ class Window(Frame):
                           width = 12, #self.acho_wg,
                           command=lambda: self.start_com())
         self.b2.grid(row=0,column=12, sticky = tk.W,padx=20)
-
-     
-        self.b3=tk.Button(fm4,text = 'Válvula',
-                          width = 12, #self.acho_wg,
-                          command=lambda: self.start_presion())
-        self.b3.grid(row=2,column=6, sticky = tk.W,padx=20,columnspan = 2)
-
-        teTimePresion = tk.Entry(fm4, textvariable =  self.tiempoP, borderwidth=5,width="20")
-        teTimePresion.grid(row=2,column=8, sticky = tk.W,padx=10,columnspan = 2)
+        '''
  ################################################################ 
     def esperar(self):
         while self.define:
@@ -629,8 +857,8 @@ class Window(Frame):
                     self.i = 0#-10
                 else:
                     #los dos ultimos valores seran vacios
-                    self.y[self.i + self.dim_array] = np.nan#np.nanmean(self.y)#None
-                    self.y[self.i + self.dim_array + 1] = np.nan#np.nanmean(self.y)#None
+                    self.y[self.i + self.dim_array] = np.nan#None#np.nanmean(self.y)#None
+                    self.y[self.i + self.dim_array + 1] = np.nan#None#np.nanmean(self.y)#None
                     
                 '''
                 if (self.i2 >= self.eje_x-2):
@@ -690,66 +918,45 @@ class Window(Frame):
             
             if (self.define == 1):
                 estado = "DESCONECTAR"
+                '''
                 puertocom = self.portser.get()
                 print (puertocom,'ecg')
-                if puertocom != 'SELECCIONA':
-                    self.ser = serial.Serial(puertocom, self.baudios, timeout=3)
-                    self.leer_ser()
+                self.ser = serial.Serial(puertocom, self.baudios, timeout=3)
+                self.leer_ser()
 
                 puertocom2 = self.portser2.get()
                 print (puertocom2,'IR RED SPO PULSO')
-                if puertocom2 != 'SELECCIONA':
-                    self.ser2 = serial.Serial(puertocom2, self.baudios, timeout=3)
-                    self.leer_ser2()
+                self.ser2 = serial.Serial(puertocom2, self.baudios, timeout=3)
+                self.leer_ser2()
 
                 puertocom3 = self.portser3.get()
                 print (puertocom3,'RESP')
-                if puertocom3 != 'SELECCIONA':
-                    self.ser3 = serial.Serial(puertocom3, self.baudios, timeout=3)
-                    self.leer_ser3()
+                self.ser3 = serial.Serial(puertocom3, self.baudios, timeout=3)
+                self.leer_ser3()
 
                 puertocom4 = self.portser4.get()
                 print (puertocom4,'PRESION')
-                if puertocom4 != 'SELECCIONA':
-                    self.ser4 = serial.Serial(puertocom4, self.baudios, timeout=3)
-                    self.leer_ser4()
+                self.ser4 = serial.Serial(puertocom4, self.baudios, timeout=3)
+                self.leer_ser4()
+                '''
 
-                
                 self.HEADERSIZE = 10
-                if(self.inicarSocket):
-                    self.inicarSocket = 0  ## se queda en cero, asi no se inicia otra vez
-                    self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    if (self.ip == ""):
-                        self.ip = socket.gethostname()
-                        #self.s.bind((socket.gethostname(), self.port))
-                        print('vacio',socket.gethostname(), self.port)
-                    else:
-                        print('ip',self.ip, self.port)
-                    self.s.bind((self.ip, self.port))
-                    self.s.listen(5)
-                    self.fireConexion()     ##mantengo el nombre fire pero conecta cliente-servidor
-
-
-                self.enviar_datos_lcd()
-
-                        
-                    
+                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                if (self.ip == ""):
+                    self.ip = socket.gethostname()
+                    #self.s.connect((socket.gethostname(), self.port))
+                    print('vacio',socket.gethostname(), self.port)
+                else:
+                    print('ip',self.ip, self.port)
+                self.s.connect((self.ip, self.port))
+                self.fireConexion()  ##mantengo el nombre fire pero conecta cliente-servidor
+                
             else:
                 estado = "CONECTAR"
-                puertocom = self.portser.get()
-                if puertocom != 'SELECCIONA':
-                    self.ser.close()
-                puertocom2 = self.portser2.get()
-                if puertocom2 != 'SELECCIONA':
-                    self.ser2.close()
-                puertocom3 = self.portser3.get()
-                if puertocom3 != 'SELECCIONA':
-                    self.ser3.close()
-                puertocom4 = self.portser4.get()
-                if puertocom4 != 'SELECCIONA':
-                    self.ser4.close()
-          
-                    
+##                self.ser.close()
+##                self.ser2.close()                
+##                self.ser3.close()
+                
             self.b1.configure(text=estado)
             
         except Exception as e:
@@ -757,13 +964,10 @@ class Window(Frame):
             self.define = 0
             estado = "CONECTAR"
             self.b1.configure(text=estado)
-            if puertocom != 'SELECCIONA':
-                self.ser.close()
-            if puertocom2 != 'SELECCIONA':
-                self.ser2.close()
-            if puertocom3 != 'SELECCIONA':
-                self.ser3.close()
-            showerror(title="ERROR",message="VERIFIQUE EL PUERTO")
+##            self.ser.close()
+##            self.ser2.close()
+##            self.ser3.close()
+            showerror(title="ERROR",message="NO SE PUDO CONECTAR")
     ################################################################
     #####El boton de stat/stop para que empiezen a enviar datos al mismo tiempo
     def start_com(self):
@@ -775,24 +979,19 @@ class Window(Frame):
                 estado2 = "STOP"
                 puertocom = self.portser.get()
                 print (puertocom)
-                if puertocom != 'SELECCIONA':
-                    self.ser.write(b'\n')
+                self.ser.write(b'\n')
 
                 puertocom2 = self.portser2.get()
                 print (puertocom2)
-                if puertocom2 != 'SELECCIONA':
-                    self.ser2.write(b'\n')
+                self.ser2.write(b'\n')
 
                 puertocom3 = self.portser3.get()
                 print (puertocom3)
-                if puertocom3 != 'SELECCIONA':
-                    self.ser3.write(b'\n')
-
-                ## no hay port4 porque inicia solo no hay necesidad de iniciarlo
+                self.ser3.write(b'\n')
                 
             else:
                 estado2 = "START"
-                #self.define = 0
+                self.define = 0
                 self.i = 0
                 self.i2 = 0
                 self.i4 = 0
@@ -807,47 +1006,6 @@ class Window(Frame):
             self.b2.configure(text=estado2)
             self.define = 0
             showerror(title="ERROR",message="VERIFIQUE EL PUERTO")
-    ################################################################
-    #####El boton de presion para iniciar el bombeo
-    def start_presion(self):
-        try:
-            self.ser4.write(b'\n')
-
-            if(self.tiempoP != '0'):
-                hiloPresion = threading.Thread(target=self.esperarPresion)
-                hiloPresion.start()
-
-            
-        except Exception as e:
-            print(e)
-            showerror(title="ERROR",message="VERIFIQUE EL PUERTO")
-
-   ################################################################
-    def esperarPresion(self):
-
-        valor = self.tiempoP.get()
-        if(valor != ''):
-            valor = int(valor)
-
-        hora  = time.time() 
-        while(self.tiempoP.get() != '0'):
-
-            current = time.time()
-            if ((current - hora) > valor): 
-                hora  = time.time()
-                
-                try:
-                    self.ser4.write(b'\n')
-                    
-                except Exception as e:
-                    print(e)
-                    showerror(title="ERROR",message="VERIFIQUE EL PUERTO")
-            
-            
-      
-
-
-            
 ################################################################ 
     def esperar2(self):
         while self.define:
@@ -873,17 +1031,14 @@ class Window(Frame):
                 #self.y2[self.i2:self.i2+self.dim_array] = aa[self.dim_array:2*self.
                     
                     #print('ff1')
-                    a = reading.split(',')[1:]  #valor 0 = 'B' y el 1 = ','
+                    a = reading.split(',')[1:]  #valor 0 es 'B' y el 1 es ','
                     #print('ff2')
                     aa = list(map(int, a))
-                    #print(aa)
                     #print('ff3')
                     
                     #self.y2[self.i2] = int(reading[2:])
 
-                    for i in range(self.dim_array2):
-
-                        self.suma[i] = sum(aa[2*i:2*i+1])  ##es 2*i ya que los pares serian 0,1  2,3  4,5 ...
+                    suma = sum(aa)
 
                     '''
                     spo = 100*aa[1]/suma
@@ -900,26 +1055,23 @@ class Window(Frame):
                         else:
                             self.spo_val.set('-')
                         if hrb:
-                            self.pulso_val.set(int(hr))
+                            valor = int(hr)+20
+                            self.pulso_val.set(valor)
+                            print(valor)
+                            print(int(self.pulsoMax.get()))
+                            if(valor > int(self.pulsoMax.get())):
+                                print('alarrma')
+                                self.mensajeAlarma('sobre self.pulsoMaxpulso')
                         else:
                             self.pulso_val.set('-')
                         
                     else:
                         self.ir[self.i_red_ir] = aa[1]
-                        self.ir[self.i_red_ir+1] = aa[3]
-                        self.ir[self.i_red_ir+2] = aa[5]
-                        self.ir[self.i_red_ir+3] = aa[7]
-                        self.ir[self.i_red_ir+4] = aa[9]
                         self.red[self.i_red_ir]= aa[0]
-                        self.red[self.i_red_ir+1]= aa[2]
-                        self.red[self.i_red_ir+2]= aa[4]
-                        self.red[self.i_red_ir+3]= aa[6]
-                        self.red[self.i_red_ir+4]= aa[8]
-                        self.i_red_ir += self.dim_array2#1
-                        #print(self.i_red_ir)
+                        self.i_red_ir += 1
 
                     
-                    self.y2[self.i2:self.i2+self.dim_array2] = self.suma*-1
+                    self.y2[self.i2:self.i2+self.dim_array2] = suma*-1
                     
                     #self.y2 = filtro.butter_highpass_filter(self.y2, 0.01, 12.4)
                     #print('ff4')
@@ -956,26 +1108,19 @@ class Window(Frame):
 
                     
                 if (self.i2 >= self.eje_x2-2):#-2
-                    self.y2[self.i2 + 0] = np.nan#np.nanmean(self.y2)# None
-                    self.y2[self.i2 + 1] = np.nan#np.nanmean(self.y2)#None
                     self.i2 = 0#-10
                 else:
-                    #pass
+                    pass
                     #los dos ultimos valores seran vacios
-                    self.y2[self.i2 + 0] = np.nan#np.nanmean(self.y2)# None
-                    self.y2[self.i2 + 1] = np.nan#np.nanmean(self.y2)#None
+                    self.y2[self.i2 + self.dim_array2] = np.nan#None#np.nanmean(self.y2)# None
+                    self.y2[self.i2 + self.dim_array2 + 1] = np.nan#None#np.nanmean(self.y2)#None
                 #print(self.y2,'l')
-                    
-                #self.i2 += self.dim_array2
-                #print(self.i2)
+
                 if letra == 'C':
                     
                     
                     temp = int(reading[1:])
                     temp = temp*500/1023
-                    ####falseo temperatura si es menor a 30
-                    if(temp <= 30 and temp > 25):
-                        temp = temp + 6
                     if self.i3 == self.dim_array3:
                         prom = np.mean(self.temp)
                         self.temp_val.set(int(prom))
@@ -1096,8 +1241,8 @@ class Window(Frame):
                 else:
                     pass
                     #los dos ultimos valores seran vacios
-                    self.y4[self.i4 + self.dim_array4] = np.nan#np.nanmean(self.y4)# None
-                    self.y4[self.i4 + self.dim_array4 + 1] = np.nan#np.nanmean(self.y4)# None
+                    self.y4[self.i4 + self.dim_array4] = np.nan#None#np.nanmean(self.y4)# None
+                    self.y4[self.i4 + self.dim_array4 + 1] = np.nan#None#np.nanmean(self.y4)# None
                 #print(self.y2,'l')
                     
                 time.sleep(0.001)
@@ -1196,89 +1341,195 @@ class Window(Frame):
 
 ################################################################ 
     def esperar5(self):
+
+
+        full_msg = b''
+        new_msg = True
         
         while self.define:
             #print('f',self.define)
             try:
-                clientsocket, address = self.s.accept()
-                
-                '''
-                datos = {
-                    'temp_val': self.temp_val.get(),
-                    'pulso_val': self.pulso_val.get(),
-                    'hr_val': self.hr_val.get(),
-                    'spo_val': self.spo_val.get(),
-                    'resp_val': self.resp_val.get(),
-                    'presion_val': self.presion_val.get(),
-                    'y' : self.y,
-                    'y2': self.y2,
-                    'y4': self.y4                
-                    }
-                '''
-                datos = {
-                    1: self.temp_val.get(),
-                    2: self.pulso_val.get(),
-                    3: self.hr_val.get(),
-                    4: self.spo_val.get(),
-                    5: self.resp_val.get(),
-                    6: self.presion_val.get(),
-                    7: self.y,
-                    8: self.y2,
-                    9: self.y4                
-                    }
-                msg = pickle.dumps(datos)
+
+
+                msg = self.s.recv(16)
+                if new_msg:
+                    #print("new msg len:",msg[:HEADERSIZE])
+                    msglen = int(msg[:self.HEADERSIZE])
+                    new_msg = False
+
+                #print(f"full message length: {msglen}")
+
+                full_msg += msg
+
+                #print(len(full_msg))
+
+                if len(full_msg)-self.HEADERSIZE == msglen:
+                    #print("full msg recvd")
+                    #print(full_msg[HEADERSIZE:])
+                    leer = pickle.loads(full_msg[self.HEADERSIZE:])
+                    #print(a)
+                    new_msg = True
+                    full_msg = b""
+                    #print(type(a),type(a[2]))
+                            
+                    #leer = self.firebase.get('/prueba/datos_post','-NB8xDJejQG3fyEjT8wg')
+                    self.temp_val.set(leer[1])
+                    self.pulso_val.set(leer[2])
+                    self.hr_val.set(leer[3])
+                    self.spo_val.set(leer[4])
+                    self.resp_val.set(leer[5])
+                    self.presion_val.set(leer[6])
+                    #a = np.asarray(leer['y'])
+                    #a[a==-1] = None
+                    #b = np.asarray(leer['y2'])
+                    #b[b==-1] = None
+                    #c = np.asarray(leer['y4'])
+                    #c[c==-1] = None
                     
-                msg = bytes(f"{len(msg):<{self.HEADERSIZE}}", 'utf-8')+msg
-                #print('o',self.define)
-                clientsocket.send(msg)
-                clientsocket.close()
-    
-                time.sleep(0.050)
+                    self.y= leer[7]#a
+                    self.y2= leer[8]#b
+                    self.y4= leer[9]#c
+
+
+                    self.ax2.set_ylim([np.nanmin(self.y2)-1, np.nanmax(self.y2)+1])
+                    self.ax4.set_ylim([np.nanmin(self.y4)-20, np.nanmax(self.y4)+20])
+                    
+                    #print('o',self.define)
+                    self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.s.connect((self.ip, self.port))
+
+                    #self.tiempoactual = datetime.now()
+                    #dif_tiempo = (self.tiempoactual - self.tiempoanterior).total_seconds()
+                    self.tiempoactual = time.time()
+                    dif_tiempo = self.tiempoactual - self.tiempoanterior
+                    if (dif_tiempo >= int(self.lapsoMinAlarma.get())):
+
+                        valor = self.temp_val.get()
+                        if(valor != '-'):
+                            valor = int(valor)
+                            if(valor > int(self.tempMax.get())):
+                                self.alarma('TEMPERATURA MÁXIMO')
+                            elif (valor < int(self.tempMin.get())):
+                                self.alarma('TEMPERATURA MÍNIMO')
+                            
+                        valor = self.pulso_val.get()
+                        if(valor != '-'):
+                            valor = int(valor)
+                            if(valor > int(self.pulsoMax.get())):
+                                #print('alarrma')
+                                self.alarma('PULSO MÁXIMO')
+                            elif (valor < int(self.pulsoMin.get())):
+                                self.alarma('PULSO MÍNIMO')
+                            
+                        valor = self.hr_val.get()
+                        if(valor != '-'):
+                            valor = int(valor)
+                            if(valor > int(self.hrMax.get())):
+                                self.alarma('HR MÁXIMO')
+                            elif (valor < int(self.hrMin.get())):
+                                self.alarma('HR MÍNIMO')
+
+                        valor = self.spo_val.get()
+                        if(valor != '-'):
+                            valor = int(valor)                    
+                            if(valor > int(self.spoMax.get())):
+                                self.alarma('SPO MÁXIMO')
+                            elif (valor < int(self.spoMin.get())):
+                                self.alarma('SPO MÍNIMO')
+                            
+                        valor = self.resp_val.get()
+                        if(valor != '-'):
+                            valor = int(valor)
+                            if(valor > int(self.respMax.get())):
+                                self.alarma('RESPIRACIÓN MÁXIMO')
+                            elif (valor < int(self.respMin.get())):
+                                self.alarma('RESPIRACIÓN MÍNIMO')
+
+
+
+                        valor = self.presion_val.get()
+                        if(valor != '-/-'):
+                            a = valor.split('/')
+                            
+                            valor = int(a[0])
+                            if(valor > int(self.presionSisMax.get())):
+                                self.alarma('PRESION SIST. MÁXIMO')
+                            elif (valor < int(self.presionSisMin.get())):
+                                self.alarma('PRESION SIST. MÍNIMO')
+
+                            valor = int(a[1])
+                            if(valor > int(self.presionDiaMax.get())):
+                                self.alarma('PRESION DIAST. MÁXIMO')
+                            elif (valor < int(self.presionDiaMin.get())):
+                                self.alarma('PRESION DIAST. MÍNIMO')
+
+
+        
+                #time.sleep(0.001)
+                
             except Exception as e:
                 print(e)
-
+                print('no se fin')
+                sys.exit()
+                return 'salir'
+        
+        return 'fin'
+    
     ################################################################                    
     def fireConexion(self):
 
         try:                           
-            hilo5 = threading.Thread(target=self.esperar5)
-            hilo5.start()
+            self.hilo5 = threading.Thread(target=self.esperar5)
+            self.hilo5.start()
 
         except Exception:
             showerror(title="ERROR",message="error conexion  firebase")  
-
-################################################################ 
-    def esperar6(self):
-
-        puerto_envio = self.ser3
+   ################################################################
+    def alarma(self, mensaje):
+##        try:
+##            print('jjjjjjjj')
+##            print(self.filewinA.winfo_exists())
+##            print('kkkkkkkkk')
+##             #self.filewinA.destroy()
+##        except:
+        if  not(self.filewinA.winfo_exists())  :
         
-        while self.define:
-            #print('f',self.define)
-            try:
-                #### mandar datos por serial al ldc
-                valor = 'H'+self.hr_val.get() +'T'+self.temp_val.get()+'P'+self.presion_val.get()
-                puerto_envio.write(valor.encode())
-                ##ser.write(b'valores')
-                ##ser.write(b'\r')
-                puerto_envio.write(b'\n')
+            self.filewinA = tk.Toplevel()
+            #self.filewinA.geometry("400x400")
+            self.filewinA.configure(bg='orange')
+
+            #filewinIP.resizable (False, False)
             
-                time.sleep(1)
-            except Exception as e:
-                print(e)
+            IZQframe = tk.Frame(self.filewinA)
+            IZQframe.pack(padx=150, pady=150)
 
-################################################################               
-    def enviar_datos_lcd(self):
+            lbConfIzq= tk.Label(IZQframe, text = mensaje, font=(None,10,'bold'))
+            lbConfIzq.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
 
-        try:                           
-            hilo6 = threading.Thread(target=self.esperar6)
-            hilo6.start()
+            #button = Button(IZQframe, text="CERRAR", command=self.filewinA.destroy)
+            button = Button(IZQframe, text="CERRAR", command= lambda:self.cerrar_ventana())
+            button.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
 
-        except Exception:
-            showerror(title="ERROR",message="error conexion  firebase")
             
+            #playsound('alarma.mp3', block = False)
+            buzzer.off()
+            self.hora  = time.time()            ##tiempo para la duracion de sonido
+            
+            
+        else:
+            current = time.time()
+            if ((current - self.hora) > 5): 
+                self.hora  = time.time()
+                
+                #print('playing sound using  playsound')
+                #playsound('alarma.mp3', block = False)
+                buzzer.on()
         
-
-       
+    ################################################################
+    def cerrar_ventana(self):
+        self.filewinA.destroy()
+        self.tiempoanterior = time.time() ##tiempo entre alarmas
+    ################################################################    
 
 for port in ports :
     qw = port.device
@@ -1290,10 +1541,10 @@ root = tk.Tk()
 #root.minsize(950,480)
 #root.config(bg= FONDO)
 root.resizable (False, False)
-ipIn = input('Enter your IP:') or ""
+ipIn = input('Enter IP server:') or ""
 portIN = int(input("Enter the port: ") or "1234")
 app = Window(root, puertos = puertos,FONDO = FONDO, TEXTCOL = TEXTCOL,
-             ip = ipIn, port = portIN)
+             ip = ipIn, port = portIN )
 app.config(bg= FONDO)
 
 app.baudios = 38400
