@@ -491,28 +491,28 @@ class Window(Frame):
         self.lbpuerto.grid(sticky='W',row=0,column=6) #,padx=20)
         #########
         self.portser = tk.StringVar()
-        self.portser.set("SELECCIONA")
+        self.portser.set("EKG")
         campport = tk.ttk.Combobox(fm4, textvariable = self.portser,
                                    width= 12)#self.acho_wg)
         campport.grid(row=0,column=7)#,padx=20)
         campport["values"] = self.ports
         #########
         self.portser2 = tk.StringVar()
-        self.portser2.set("SELECCIONA")
+        self.portser2.set("SPO")
         campport2 = tk.ttk.Combobox(fm4, textvariable = self.portser2,
                                    width= 12)#self.acho_wg)
         campport2.grid(row=0,column=8)#,padx=20)
         campport2["values"] = self.ports
         #########
         self.portser3 = tk.StringVar()
-        self.portser3.set("SELECCIONA")
+        self.portser3.set("RESP")
         campport3 = tk.ttk.Combobox(fm4, textvariable = self.portser3,
                                    width= 12)#self.acho_wg)
         campport3.grid(row=0,column=9)#,padx=20)
         campport3["values"] = self.ports
         #########
         self.portser4 = tk.StringVar()
-        self.portser4.set("SELECCIONA")
+        self.portser4.set("PRESION")
         campport4 = tk.ttk.Combobox(fm4, textvariable = self.portser4,
                                    width= 12)#self.acho_wg)
         campport4.grid(row=0,column=10)#,padx=20)
@@ -692,25 +692,25 @@ class Window(Frame):
                 estado = "DESCONECTAR"
                 puertocom = self.portser.get()
                 print (puertocom,'ecg')
-                if puertocom != 'SELECCIONA':
+                if puertocom != 'EKG':
                     self.ser = serial.Serial(puertocom, self.baudios, timeout=3)
                     self.leer_ser()
 
                 puertocom2 = self.portser2.get()
                 print (puertocom2,'IR RED SPO PULSO')
-                if puertocom2 != 'SELECCIONA':
+                if puertocom2 != 'SPO':
                     self.ser2 = serial.Serial(puertocom2, self.baudios, timeout=3)
                     self.leer_ser2()
 
                 puertocom3 = self.portser3.get()
                 print (puertocom3,'RESP')
-                if puertocom3 != 'SELECCIONA':
+                if puertocom3 != 'RESP':
                     self.ser3 = serial.Serial(puertocom3, self.baudios, timeout=3)
                     self.leer_ser3()
 
                 puertocom4 = self.portser4.get()
                 print (puertocom4,'PRESION')
-                if puertocom4 != 'SELECCIONA':
+                if puertocom4 != 'PRESION':
                     self.ser4 = serial.Serial(puertocom4, self.baudios, timeout=3)
                     self.leer_ser4()
 
@@ -730,23 +730,23 @@ class Window(Frame):
                     self.fireConexion()     ##mantengo el nombre fire pero conecta cliente-servidor
 
 
-                self.enviar_datos_lcd()
+                #self.enviar_datos_lcd()
 
                         
                     
             else:
                 estado = "CONECTAR"
                 puertocom = self.portser.get()
-                if puertocom != 'SELECCIONA':
+                if puertocom != 'EKG':
                     self.ser.close()
                 puertocom2 = self.portser2.get()
-                if puertocom2 != 'SELECCIONA':
+                if puertocom2 != 'SPO':
                     self.ser2.close()
                 puertocom3 = self.portser3.get()
-                if puertocom3 != 'SELECCIONA':
+                if puertocom3 != 'RESP':
                     self.ser3.close()
                 puertocom4 = self.portser4.get()
-                if puertocom4 != 'SELECCIONA':
+                if puertocom4 != 'PRESION':
                     self.ser4.close()
           
                     
@@ -757,11 +757,11 @@ class Window(Frame):
             self.define = 0
             estado = "CONECTAR"
             self.b1.configure(text=estado)
-            if puertocom != 'SELECCIONA':
+            if puertocom != 'EKG':
                 self.ser.close()
-            if puertocom2 != 'SELECCIONA':
+            if puertocom2 != 'SPO':
                 self.ser2.close()
-            if puertocom3 != 'SELECCIONA':
+            if puertocom3 != 'RESP':
                 self.ser3.close()
             showerror(title="ERROR",message="VERIFIQUE EL PUERTO")
     ################################################################
@@ -775,17 +775,17 @@ class Window(Frame):
                 estado2 = "STOP"
                 puertocom = self.portser.get()
                 print (puertocom)
-                if puertocom != 'SELECCIONA':
+                if puertocom != 'EKG':
                     self.ser.write(b'\n')
 
                 puertocom2 = self.portser2.get()
                 print (puertocom2)
-                if puertocom2 != 'SELECCIONA':
+                if puertocom2 != 'SPO':
                     self.ser2.write(b'\n')
 
                 puertocom3 = self.portser3.get()
                 print (puertocom3)
-                if puertocom3 != 'SELECCIONA':
+                if puertocom3 != 'RESP':
                     self.ser3.write(b'\n')
 
                 ## no hay port4 porque inicia solo no hay necesidad de iniciarlo
