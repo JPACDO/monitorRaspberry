@@ -292,8 +292,10 @@ class Window(Frame):
         self.filewinIP.resizable (False, False)
 
         #filewinIP.resizable (False, False)
+        AFrame = tk.Frame(self.filewinIP)
+        AFrame.pack(padx=10, pady=5,side = tk.LEFT)
         
-        IZQframe = tk.Frame(self.filewinIP)
+        IZQframe = tk.Frame(AFrame)
         IZQframe.pack(padx=10, pady=5)
 
         lbConfIzq= tk.Label(IZQframe, text = "CONFIGURACION HR", font=(None,10,'bold'))
@@ -307,7 +309,7 @@ class Window(Frame):
         tePortIzq = tk.Entry(IZQframe, textvariable = self.hrMax, borderwidth=5,width="5")
         tePortIzq.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
-        DERframe = tk.Frame(self.filewinIP)
+        DERframe = tk.Frame(AFrame)
         DERframe.pack(padx=10, pady=5)
 
         lbConfDer= tk.Label(DERframe, text = "CONFIGURACION PULSO", font=(None,10,'bold'))
@@ -322,7 +324,7 @@ class Window(Frame):
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
 
-        SPOframe = tk.Frame(self.filewinIP)
+        SPOframe = tk.Frame(AFrame)
         SPOframe.pack(padx=10, pady=5)
 
         lbConfDer= tk.Label(SPOframe, text = "CONFIGURACION SPO", font=(None,10,'bold'))
@@ -336,9 +338,9 @@ class Window(Frame):
         tePortDer = tk.Entry(SPOframe, textvariable = self.spoMax, borderwidth=5,width="5")
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
-        TEMPframe = tk.Frame(self.filewinIP)
+        TEMPframe = tk.Frame(AFrame)
         TEMPframe.pack(padx=10, pady=5)
-
+        
         lbConfDer= tk.Label(TEMPframe, text = "CONFIGURACION TEMP", font=(None,10,'bold'))
         lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
         lbIPDer= tk.Label(TEMPframe, text = "MIN: ")
@@ -350,7 +352,10 @@ class Window(Frame):
         tePortDer = tk.Entry(TEMPframe, textvariable = self.tempMax, borderwidth=5,width="5")
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
-        RESPframe = tk.Frame(self.filewinIP)
+        BFrame = tk.Frame(self.filewinIP)
+        BFrame.pack(padx=10, pady=5,side = tk.RIGHT)
+
+        RESPframe = tk.Frame(BFrame)
         RESPframe.pack(padx=10, pady=5)
 
         lbConfDer= tk.Label(RESPframe, text = "CONFIGURACION RESP", font=(None,10,'bold'))
@@ -364,7 +369,7 @@ class Window(Frame):
         tePortDer = tk.Entry(RESPframe, textvariable = self.respMax, borderwidth=5,width="5")
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
         
-        SISframe = tk.Frame(self.filewinIP)
+        SISframe = tk.Frame(BFrame)
         SISframe.pack(padx=10, pady=5)
 
         lbConfDer= tk.Label(SISframe, text = "CONFIGURACION PRESION SISTOLICA", font=(None,10,'bold'))
@@ -378,7 +383,7 @@ class Window(Frame):
         tePortDer = tk.Entry(SISframe, textvariable = self.presionSisMax, borderwidth=5,width="5")
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
-        DIAframe = tk.Frame(self.filewinIP)
+        DIAframe = tk.Frame(BFrame)
         DIAframe.pack(padx=10, pady=5)
 
         lbConfDer= tk.Label(DIAframe, text = "CONFIGURACION PRESION DIASTOLICA", font=(None,10,'bold'))
@@ -392,7 +397,7 @@ class Window(Frame):
         tePortDer = tk.Entry(DIAframe, textvariable = self.presionDiaMax, borderwidth=5,width="5")
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
         
-        ALARframe = tk.Frame(self.filewinIP)
+        ALARframe = tk.Frame(BFrame)
         ALARframe.pack(padx=10, pady=5)
 
         lbConfAlar= tk.Label(ALARframe, text = "CONFIGURACION TIEMPO ENTRE ALARMAS", font=(None,10,'bold'))
