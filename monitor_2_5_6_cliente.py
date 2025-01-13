@@ -808,12 +808,12 @@ class Window(Frame):
 
         '''
         if (self.define == 1):
-            estado = "DESCONECTAR"
+            estado = "X"
         else:
-            estado = "CONECTAR"
+            estado = "->"
      
         self.b1=tk.Button(fm4,text = estado,
-                          width = 12, #self.acho_wg,
+                          #width = 12, #self.acho_wg,
                           command=lambda: self.conexion())
         self.b1.grid(row=0,column=11, sticky = tk.W,padx=20)
 
@@ -945,7 +945,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA a")
                 self.ser.close()
                 self.define = 0
-                estado = "CONECTAR"
+                estado = "->"
                 self.b1.configure(text=estado)
            
                 
@@ -969,7 +969,7 @@ class Window(Frame):
             self.define = 1 - self.define
             
             if (self.define == 1):
-                estado = "DESCONECTAR"
+                estado = "X"
                 '''
                 puertocom = self.portser.get()
                 print (puertocom,'ecg')
@@ -1004,7 +1004,7 @@ class Window(Frame):
                 self.fireConexion()  ##mantengo el nombre fire pero conecta cliente-servidor
                 
             else:
-                estado = "CONECTAR"
+                estado = "->"
 ##                self.ser.close()
 ##                self.ser2.close()                
 ##                self.ser3.close()
@@ -1014,7 +1014,7 @@ class Window(Frame):
         except Exception as e:
             print(e)
             self.define = 0
-            estado = "CONECTAR"
+            estado = "->"
             self.b1.configure(text=estado)
 ##            self.ser.close()
 ##            self.ser2.close()
@@ -1201,7 +1201,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA b")
                 self.ser2.close()
                 self.define = 0
-                estado = "CONECTAR"
+                estado = "->"
                 self.b1.configure(text=estado)
            
                 
@@ -1307,7 +1307,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA c")
                 self.ser3.close()
                 self.define = 0
-                estado = "CONECTAR"
+                estado = "->"
                 self.b1.configure(text=estado)
            
                 
@@ -1373,7 +1373,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA d")
                 self.ser4.close()
                 self.define = 0
-                estado = "CONECTAR"
+                estado = "->"
                 self.b1.configure(text=estado)
            
                 
