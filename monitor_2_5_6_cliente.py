@@ -52,7 +52,7 @@ ports = serial.tools.list_ports.comports(include_links=False)
 puertos = []
 buzzer = Buzzer(17)
 fontSize = 8 # tamano letra cuadros titulos
-fontSize2 = 15 #tamano letra contenido valor del cuadro
+fontSize2 = 50 #tamano letra contenido valor del cuadro
 
 class Window(Frame):
 
@@ -116,8 +116,8 @@ class Window(Frame):
         self.presion_val = tk.StringVar()           #variable valor presion sis/dias
         self.presion_val.set('-/-')
         
-        self.h = 2
-        self.w = 9
+        self.h = 1          #tamano del plot
+        self.w = 6          #tamano del plot
         print(self.h,self.w)
 
         self.ip = ip
@@ -236,12 +236,16 @@ class Window(Frame):
 
         self.ax.set_xlim([0, self.eje_x])
         self.ax.set_ylim([100, 600])
-        self.ax.set_axis_off()
+        #self.ax.set_axis_off()
+        
         
         self.line, = self.ax.plot(self.y,color="green")#self.x, np.sin(self.x))        
 
         self.ax.set_facecolor(self.FONDO)
         self.fig.patch.set_facecolor(self.FONDO)
+        
+        self.ax.patch.set_edgecolor('green')  
+        self.ax.patch.set_linewidth(2)
         
         ###########
         self.fig2 = plt.Figure(figsize=(self.w, self.h), dpi = self.dpi)
@@ -250,12 +254,15 @@ class Window(Frame):
 
         self.ax2.set_xlim([0, self.eje_x2])
         self.ax2.set_ylim([3000, 4000])
-        self.ax2.set_axis_off()
+        #self.ax2.set_axis_off()
         
         self.line2, = self.ax2.plot(self.y2,color="green")#self.x, np.sin(self.x))        
 
         self.ax2.set_facecolor(self.FONDO)
         self.fig2.patch.set_facecolor(self.FONDO)
+        
+        self.ax2.patch.set_edgecolor('green')  
+        self.ax2.patch.set_linewidth(2)
         
         ###########
         self.fig4 = plt.Figure(figsize=(self.w, self.h), dpi = self.dpi)
@@ -433,62 +440,92 @@ class Window(Frame):
                        highlightthickness=1)
         fm1.config(bg= FONDO)
         fm1.grid(row=0, column=0,
-                 rowspan = 1, #8
-                 columnspan = 6,
-                 padx=5, pady=5)
+                 sticky="nsew",
+                 #rowspan = 3, #8
+                 #columnspan = 3,
+                 #padx=5, pady=5
+                 )
+        self.grid_columnconfigure(0, weight=1) 
+        self.grid_columnconfigure(1, weight=1) 
+        self.grid_rowconfigure(0, weight=1) 
+        self.grid_rowconfigure(1, weight=1)
 
         # Frame para parametros ECG
-        fm2 = tk.Frame(fm1,highlightbackground="red",
-                       highlightthickness=1)
+        fm2 = tk.Frame(fm1,
+                        #highlightbackground="red",
+                       #highlightthickness=1
+                       )
         fm2.config(bg= FONDO)
-        fm2.grid(row=0, column=6,
-                 rowspan = 1,
+        fm2.grid(row=0, column=0,
+                 rowspan = 3,
                  columnspan = 1,
                  padx=1, pady=1)
         # Frame para parametros PULSO
+        '''
         fm2_3 = tk.Frame(fm1,highlightbackground="red",
                        highlightthickness=1)
         fm2_3.config(bg= FONDO)
-        fm2_3.grid(row=1, column=6,
-                 rowspan = 4,
+        fm2_3.grid(row=0, column=1,
+                 rowspan = 1,
                  columnspan = 1,
                  padx=1, pady=1)
-
+        '''
 
         # Frame horizontal 2 grafico y parametros SPO/TEMP
         fm5 = tk.Frame(self,highlightbackground="red",
                        highlightthickness=1)
         fm5.config(bg= FONDO)
-        fm5.grid(row=1, column=0,
-                 rowspan = 1,
-                 columnspan = 6,
-                 padx=5, pady=5)
+        fm5.grid(row=0, column=1,
+                sticky="nsew",
+                 #rowspan = 3,
+                 #columnspan = 3,
+                 #padx=5, pady=5
+                 )
 
         # Frame para parametros SPO
-        fm3 = tk.Frame(fm5,highlightbackground="red",
-                       highlightthickness=1)
+        fm3 = tk.Frame(fm5,
+                        #highlightbackground="red",
+                       #highlightthickness=1
+                       )
         fm3.config(bg= FONDO)
-        fm3.grid(row=0, column=6,
-                 rowspan = 1,
+        fm3.grid(row=0, column=0,
+                 rowspan = 2,
                  columnspan = 1,
                  padx=1, pady=1)
         
+        
+        # Frame horizontal 4 TEMP
+        fm7 = tk.Frame(self,
+                        highlightbackground="red",
+                       highlightthickness=1
+                       )
+        fm7.config(bg= FONDO)
+        fm7.grid(row=1, column=1,
+                sticky="nsew",
+                 #rowspan = 3,
+                 #columnspan = 3,
+                 #padx=5, pady=5
+                 )
         # Frame para parametros TEMP
-        fm5_3 = tk.Frame(fm5,highlightbackground="red",
-                       highlightthickness=1)
+        
+        fm5_3 = tk.Frame(fm7,
+                        #highlightbackground="red",
+                       #highlightthickness=1
+                       )
         fm5_3.config(bg= FONDO)
-        fm5_3.grid(row=1, column=6,
-                 rowspan = 1,
-                 columnspan = 1,
-                 padx=1, pady=1)
+        fm5_3.grid(row=0, column=1,
+                 sticky="nsew",
+                 #rowspan = 3,
+                 #columnspan = 3,
+                 padx=10, pady=10)
 
 
         # Frame para config 
         fm4 = tk.Frame(self)
         fm4.config(bg= FONDO)
-        fm4.grid(row=8, column=0,
+        fm4.grid(row=0, column=6,
                  rowspan = 1,
-                 columnspan = 9,
+                 columnspan = 1,
                  padx=5, pady=10)
 
 
@@ -496,28 +533,34 @@ class Window(Frame):
         fm6 = tk.Frame(self,highlightbackground="red",
                        highlightthickness=1)
         fm6.config(bg= FONDO)
-        fm6.grid(row=2, column=0,
-                 rowspan = 1,
-                 columnspan = 6,
-                 padx=5, pady=5)
+        fm6.grid(row=1, column=0,
+                sticky="nsew",
+                 #rowspan = 3,
+                 #columnspan = 3,
+                 #padx=5, pady=5
+                 )
 
         # Frame para parametros RESP
-        fm6_1 = tk.Frame(fm6,highlightbackground="red",
+        '''fm6_1 = tk.Frame(fm6,highlightbackground="red",
                        highlightthickness=1)
         fm6_1.config(bg= FONDO)
         fm6_1.grid(row=0, column=6,
                  rowspan = 1,
                  columnspan = 1,
                  padx=1, pady=1)
+        '''
         
         # Frame para parametros PRESION
-        fm6_2 = tk.Frame(fm6,highlightbackground="red",
-                       highlightthickness=1)
+        fm6_2 = tk.Frame(fm6,
+                        #highlightbackground="red",
+                       #highlightthickness=1
+                       )
         fm6_2.config(bg= FONDO)
-        fm6_2.grid(row=1, column=6,
-                 rowspan = 1,
-                 columnspan = 1,
-                 padx=1, pady=1)
+        fm6_2.grid(row=0, column=0,
+                sticky="nsew",
+                 #rowspan = 3,
+                 #columnspan = 3,
+                 padx=10, pady=10)
 
 
         #DATOS PARA FM2 ------------------------------
@@ -571,7 +614,7 @@ class Window(Frame):
 
         #DATOS PARA FM2_3 ------------------------------
         #----------------------------------------------
-
+        '''
         self.labelPULSO = Label(fm2_3,text="PULSO\n",
                              width=self.acho_wg, #relief=tk.SUNKEN,
                              bg=self.FONDO,font=(None,fontSize,'bold'),
@@ -601,7 +644,7 @@ class Window(Frame):
 ##                                 fg=self.TEXTCOL,
 ##                                anchor="e",justify=tk.RIGHT)
 ##        self.labelPULSOval.grid(row=1,column=0, sticky = tk.W)
-
+        '''
         #DATOS PARA FM5_3 ------------------------------
         #----------------------------------------------
 
@@ -637,7 +680,7 @@ class Window(Frame):
 
         #DATOS PARA FM6_1 ------------------------------
         #----------------------------------------------
-
+        '''
         self.labelRESP = Label(fm6_1,text="RESP\n",
                              width=self.acho_wg, #relief=tk.SUNKEN,
                              bg=self.FONDO,font=(None,fontSize,'bold'),
@@ -667,6 +710,8 @@ class Window(Frame):
 ##                                 fg=self.TEXTCOL,
 ##                                anchor="e",justify=tk.RIGHT)
 ##        self.labelRESPval.grid(row=1, column=0, sticky = tk.W)
+        '''
+        
         #DATOS PARA FM6_2 ------------------------------
         #----------------------------------------------
 
@@ -710,16 +755,18 @@ class Window(Frame):
         #----------------------------------------------
         self.creation_plot()
         self.canvas = FigureCanvasTkAgg(self.fig, master=fm1)
-        self.canvas.get_tk_widget().grid(column=0,row=0,# columnspan = 6,
-                                         rowspan = 2)
+        self.canvas.get_tk_widget().grid(column=0,row=3, columnspan = 3,
+                                         #rowspan = 2
+                                         )
 
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=fm5)
-        self.canvas2.get_tk_widget().grid(column=0,row=0,# columnspan = 6,
-                                          rowspan = 2)
+        self.canvas2.get_tk_widget().grid(column=0,row=6, columnspan = 3,
+                                          #rowspan = 2
+                                          )
 
-        self.canvas4 = FigureCanvasTkAgg(self.fig4, master=fm6)
-        self.canvas4.get_tk_widget().grid(column=0,row=0,# columnspan = 6,
-                                          rowspan = 2)
+        #self.canvas4 = FigureCanvasTkAgg(self.fig4, master=fm6)
+        #self.canvas4.get_tk_widget().grid(column=0,row=0,# columnspan = 6,
+         #                                 rowspan = 2)
 
         self.go()
         '''
@@ -1542,7 +1589,7 @@ for port in ports :
 
 root = tk.Tk()
 #root.title('A - MONITOR MULTIVARIABLE - T')
-#root.geometry("1000x500")
+root.geometry("1000x500")
 #root.minsize(950,480)
 #root.config(bg= FONDO)
 root.resizable (False, False)
