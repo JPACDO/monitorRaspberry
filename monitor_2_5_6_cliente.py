@@ -52,7 +52,7 @@ ports = serial.tools.list_ports.comports(include_links=False)
 puertos = []
 buzzer = Buzzer(17)
 fontSize = 8 # tamano letra cuadros titulos
-fontSize2 = 50 #tamano letra contenido valor del cuadro
+fontSize2 = 80 #tamano letra contenido valor del cuadro
 
 class Window(Frame):
 
@@ -232,7 +232,7 @@ class Window(Frame):
     def creation_plot(self):
         self.fig = plt.Figure(figsize=(self.w, self.h), dpi = self.dpi)
         self.ax = self.fig.add_subplot(111)
-        self.ax.set_title('ECG', loc='left', color='green')#fontdict=fd,
+        #self.ax.set_title('ECG', loc='left', color='green')#fontdict=fd,
 
         self.ax.set_xlim([0, self.eje_x])
         self.ax.set_ylim([100, 600])
@@ -250,7 +250,7 @@ class Window(Frame):
         ###########
         self.fig2 = plt.Figure(figsize=(self.w, self.h), dpi = self.dpi)
         self.ax2 = self.fig2.add_subplot(111)
-        self.ax2.set_title('PULSO', loc='left', color='green')#fontdict=fd,
+        #self.ax2.set_title('PULSO', loc='left', color='green')#fontdict=fd,
 
         self.ax2.set_xlim([0, self.eje_x2])
         self.ax2.set_ylim([3000, 4000])
@@ -444,6 +444,7 @@ class Window(Frame):
                  #rowspan = 3, #8
                  #columnspan = 3,
                  #padx=5, pady=5
+                 
                  )
         self.grid_columnconfigure(0, weight=1) 
         self.grid_columnconfigure(1, weight=1) 
@@ -457,9 +458,12 @@ class Window(Frame):
                        )
         fm2.config(bg= FONDO)
         fm2.grid(row=0, column=0,
-                 rowspan = 3,
-                 columnspan = 1,
-                 padx=1, pady=1)
+                 #rowspan = 3,
+                #columnspan = 3,
+                 #padx=1, pady=1,
+                 sticky="nsew",
+                 
+                                  )
         # Frame para parametros PULSO
         '''
         fm2_3 = tk.Frame(fm1,highlightbackground="red",
@@ -491,7 +495,8 @@ class Window(Frame):
         fm3.grid(row=0, column=0,
                  rowspan = 2,
                  columnspan = 1,
-                 padx=1, pady=1)
+                 #padx=10, pady=1
+                 )
         
         
         # Frame horizontal 4 TEMP
@@ -517,7 +522,8 @@ class Window(Frame):
                  sticky="nsew",
                  #rowspan = 3,
                  #columnspan = 3,
-                 padx=10, pady=10)
+                 #padx=10, pady=10
+                 )
 
 
         # Frame para config 
@@ -526,7 +532,9 @@ class Window(Frame):
         fm4.grid(row=0, column=6,
                  rowspan = 1,
                  columnspan = 1,
-                 padx=5, pady=10)
+                 #padx=5, pady=10
+                 )
+                 
 
 
         # Frame horizontal 3 grafico y parametros RESP/PRESION
@@ -560,7 +568,8 @@ class Window(Frame):
                 sticky="nsew",
                  #rowspan = 3,
                  #columnspan = 3,
-                 padx=10, pady=10)
+                 padx=10, pady=10
+                 )
 
 
         #DATOS PARA FM2 ------------------------------
@@ -569,8 +578,9 @@ class Window(Frame):
         self.labelHR = Label(fm2,text="HR\n",
                              width=self.acho_wg, #relief=tk.SUNKEN,
                              bg=self.FONDO,font=(None,fontSize,'bold'),
-                             fg=self.TEXTCOL)
-        self.labelHR.grid(row=0,column=0, rowspan = 2)
+                              fg=self.TEXTCOL,
+                            justify=tk.LEFT)
+        self.labelHR.grid(row=0,column=0, sticky=tk.W)
         self.labelHRmax = Label(fm2,textvariable=self.hrMax,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                 fg=self.TEXTCOL,
@@ -582,10 +592,10 @@ class Window(Frame):
                                 anchor="e",justify=tk.RIGHT)
         self.labelHRmin.grid(row=3,column=0, sticky = tk.W)
         
-        self.textHRval = Label(fm2,textvariable=self.hr_val,width=int(self.acho_wg/2),
+        self.textHRval = Label(fm2,textvariable=self.hr_val,width=int(self.acho_wg*0.8),
                                fg=self.TEXTCOL,
                                bg=self.FONDO, font=(None,fontSize2,'bold'))
-        self.textHRval.grid(row=0,column=1, rowspan = 4)
+        self.textHRval.grid(row=1,column=0, columnspan = 3, sticky = 'we')
 
         
         #DATOS PARA FM3 ------------------------------
@@ -595,7 +605,9 @@ class Window(Frame):
                              width=self.acho_wg, #relief=tk.SUNKEN,
                              bg=self.FONDO,font=(None,fontSize,'bold'),
                               fg=self.TEXTCOL)
-        self.labelSPO.grid(row=0,column=0, rowspan = 2)
+        self.labelSPO.grid(row=0,column=0, 
+                            #rowspan = 2
+                            )
         self.labelSPOmax = Label(fm3,textvariable=self.spoMax,width=self.acho_wg,
                                 font=(None,fontSize,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
@@ -607,10 +619,12 @@ class Window(Frame):
                                 anchor="e",justify=tk.RIGHT)
         self.labelSPOmin.grid(row=3,column=0, sticky = tk.W)
         
-        self.textSPOval = Label(fm3,textvariable=self.spo_val,width=int(self.acho_wg/2),
+        self.textSPOval = Label(fm3,textvariable=self.spo_val,width=int(self.acho_wg*0.8),
                                bg=self.FONDO, font=(None,fontSize2,'bold'),
                                 fg=self.TEXTCOL)
-        self.textSPOval.grid(row=0,column=1, rowspan = 4)
+        self.textSPOval.grid(row=1,column=1,
+                            #columnspan = 3
+                            )
 
         #DATOS PARA FM2_3 ------------------------------
         #----------------------------------------------
@@ -653,7 +667,9 @@ class Window(Frame):
                              bg=self.FONDO,font=(None,fontSize,'bold'),
                               fg=self.TEXTCOL,
                                 anchor="e",justify=tk.LEFT)
-        self.labelTEMP.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
+        self.labelTEMP.grid(row=0,column=0, 
+                        #rowspan = 1, sticky = tk.W
+                        )
 
 
         self.labelTEMPmax = Label(fm5_3,textvariable=self.tempMax,width=self.acho_wg,
@@ -667,10 +683,10 @@ class Window(Frame):
                                 anchor="e",justify=tk.RIGHT)
         self.labelTEMPmin.grid(row=3,column=0, sticky = tk.W)
         
-        self.textTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg/2),
+        self.textTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg*0.8),
                                bg=self.FONDO, font=(None,fontSize2,'bold'),
                                 fg=self.TEXTCOL)
-        self.textTEMPval.grid(row=0,column=1, rowspan = 4)
+        self.textTEMPval.grid(row=1,column=1)
         
 ##        self.labelTEMPval = Label(fm5_3,textvariable=self.temp_val,width=int(self.acho_wg),
 ##                                font=(None,25,'bold'),bg=self.FONDO,
@@ -719,13 +735,14 @@ class Window(Frame):
                              width=self.acho_wg, #relief=tk.SUNKEN,
                              bg=self.FONDO,font=(None,fontSize,'bold'),
                               fg=self.TEXTCOL,
-                                anchor="e",justify=tk.LEFT)
+                            justify=tk.LEFT)
         self.labelPRESION.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
-        self.labelPRESIONval = Label(fm6_2,textvariable=self.presion_val,width=int(self.acho_wg),
+        self.labelPRESIONval = Label(fm6_2,textvariable=self.presion_val,
+                                    width=int(self.acho_wg*0.8),
                                 font=(None,fontSize2,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
-                                anchor="e",justify=tk.RIGHT)
-        self.labelPRESIONval.grid(row=1, column=0, sticky = tk.W)
+                                justify=tk.RIGHT)
+        self.labelPRESIONval.grid(row=1, column=0)
 ##        self.textAmplitude.insert(0, "1.0")
 ##        self.textSpeed.insert(0, "1.0")
 ##        self.v = float(self.textSpeed.get())
@@ -754,14 +771,18 @@ class Window(Frame):
         #CRACION DE LOS PLOT ------------------------------
         #----------------------------------------------
         self.creation_plot()
-        self.canvas = FigureCanvasTkAgg(self.fig, master=fm1)
-        self.canvas.get_tk_widget().grid(column=0,row=3, columnspan = 3,
-                                         #rowspan = 2
+        self.canvas = FigureCanvasTkAgg(self.fig, master=fm1 )
+        self.canvas.get_tk_widget().grid(column=0,row=4, 
+                                        #columnspan = 3,
+                                         #rowspan = 2, 
+                                         sticky = "w"
                                          )
 
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=fm5)
-        self.canvas2.get_tk_widget().grid(column=0,row=6, columnspan = 3,
+        self.canvas2.get_tk_widget().grid(column=0,row=4, 
+                                            #columnspan = 3,
                                           #rowspan = 2
+                                          sticky = "w"
                                           )
 
         #self.canvas4 = FigureCanvasTkAgg(self.fig4, master=fm6)
