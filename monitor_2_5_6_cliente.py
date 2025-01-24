@@ -161,7 +161,7 @@ class Window(Frame):
         self.filewinA = tk.Toplevel()
         self.filewinA.destroy()
         
-        self.menu_top()
+        #self.menu_top()
         self.init_window()
         #self.bind("<Configure>",  self.resize)   #####efecto de cambiar de tamaño plot segun tamaño ventana
         self.master.bind('<Escape>', lambda e: self.salida())
@@ -434,7 +434,7 @@ class Window(Frame):
     ################################################################
     def init_window(self):
 
-        self.master.title("'A - MONITOR MULTIVARIABLE r- T'")
+        self.master.title("'A - MONITOR MULTIVARIABLE - T'")
         self.pack(fill='both', expand=1)     
 
 
@@ -575,7 +575,7 @@ class Window(Frame):
                 sticky="nsew",
                  #rowspan = 3,
                  #columnspan = 3,
-                 padx=10, pady=10
+                 padx=10, pady=0
                  )
 
 
