@@ -53,6 +53,9 @@ puertos = []
 buzzer = Buzzer(17)
 fontSize = 8 # tamano letra cuadros titulos
 fontSize2 = 80 #tamano letra contenido valor del cuadro
+btn1my = 'Conec'
+btn1mn = 'Desc'
+btn2m = 'Alarm'
 
 class Window(Frame):
 
@@ -527,12 +530,16 @@ class Window(Frame):
 
 
         # Frame para config 
-        fm4 = tk.Frame(self)
+        fm4 = tk.Frame(self,
+                        highlightbackground="red",
+                       highlightthickness=1)
         fm4.config(bg= FONDO)
         fm4.grid(row=0, column=6,
-                 rowspan = 1,
+                sticky="nsew",
+                 rowspan = 2,
                  columnspan = 1,
                  #padx=5, pady=10
+                 
                  )
                  
 
@@ -829,14 +836,16 @@ class Window(Frame):
 
         '''
         if (self.define == 1):
-            estado = "X"
+            estado = btn1mn
         else:
-            estado = "->"
+            estado = btn1my
      
         self.b1=tk.Button(fm4,text = estado,
                           #width = 12, #self.acho_wg,
                           command=lambda: self.conexion())
-        self.b1.grid(row=0,column=11, sticky = tk.W,padx=20)
+        self.b1.grid(row=0,column=0, sticky = tk.W,padx=20 , pady = 10)
+
+
 
         '''
         if (self.define2 == 1):
@@ -849,6 +858,11 @@ class Window(Frame):
                           command=lambda: self.start_com())
         self.b2.grid(row=0,column=12, sticky = tk.W,padx=20)
         '''
+        
+        self.bAlarm=tk.Button(fm4,text = btn2m,
+                          #width = 12, #self.acho_wg,
+                          command=lambda: self.editar_title())
+        self.bAlarm.grid(row=2,column=0, sticky = tk.W,padx=20, pady =10)        
  ################################################################ 
     def esperar(self):
         while self.define:
@@ -966,7 +980,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA a")
                 self.ser.close()
                 self.define = 0
-                estado = "->"
+                estado = btn1my
                 self.b1.configure(text=estado)
            
                 
@@ -990,7 +1004,7 @@ class Window(Frame):
             self.define = 1 - self.define
             
             if (self.define == 1):
-                estado = "X"
+                estado = btn1mn
                 '''
                 puertocom = self.portser.get()
                 print (puertocom,'ecg')
@@ -1025,7 +1039,7 @@ class Window(Frame):
                 self.fireConexion()  ##mantengo el nombre fire pero conecta cliente-servidor
                 
             else:
-                estado = "->"
+                estado = btn1my
 ##                self.ser.close()
 ##                self.ser2.close()                
 ##                self.ser3.close()
@@ -1035,7 +1049,7 @@ class Window(Frame):
         except Exception as e:
             print(e)
             self.define = 0
-            estado = "->"
+            estado = btn1my
             self.b1.configure(text=estado)
 ##            self.ser.close()
 ##            self.ser2.close()
@@ -1222,7 +1236,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA b")
                 self.ser2.close()
                 self.define = 0
-                estado = "->"
+                estado = btn1my
                 self.b1.configure(text=estado)
            
                 
@@ -1328,7 +1342,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA c")
                 self.ser3.close()
                 self.define = 0
-                estado = "->"
+                estado = btn1my
                 self.b1.configure(text=estado)
            
                 
@@ -1394,7 +1408,7 @@ class Window(Frame):
                 showerror(title="ERROR",message="SIN LECTURA d")
                 self.ser4.close()
                 self.define = 0
-                estado = "->"
+                estado = btn1my
                 self.b1.configure(text=estado)
            
                 
