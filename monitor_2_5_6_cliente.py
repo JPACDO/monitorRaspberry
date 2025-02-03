@@ -57,6 +57,7 @@ fontSize2 = 80 #tamano letra contenido valor del cuadro
 btn1my = 'Conec'
 btn1mn = 'Desc'
 btn2m = 'Alarm'
+btn3db = 'DB'
 
 class Window(Frame):
 
@@ -364,6 +365,89 @@ class Window(Frame):
         tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
 
         BFrame = tk.Frame(self.filewinIP)
+        BFrame.pack(padx=10, pady=5,side = tk.RIGHT)
+
+        RESPframe = tk.Frame(BFrame)
+        RESPframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(RESPframe, text = "CONFIGURACION RESP", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(RESPframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(RESPframe, textvariable = self.respMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(RESPframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(RESPframe, textvariable = self.respMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        
+        SISframe = tk.Frame(BFrame)
+        SISframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(SISframe, text = "CONFIGURACION PRESION SISTOLICA", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(SISframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(SISframe, textvariable = self.presionSisMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(SISframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(SISframe, textvariable = self.presionSisMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+        DIAframe = tk.Frame(BFrame)
+        DIAframe.pack(padx=10, pady=5)
+
+        lbConfDer= tk.Label(DIAframe, text = "CONFIGURACION PRESION DIASTOLICA", font=(None,10,'bold'))
+        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPDer= tk.Label(DIAframe, text = "MIN: ")
+        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teIPDer = tk.Entry(DIAframe, textvariable = self.presionDiaMin, borderwidth=5,width="20")
+        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbPortDer= tk.Label(DIAframe, text = "MAX: ")
+        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        tePortDer = tk.Entry(DIAframe, textvariable = self.presionDiaMax, borderwidth=5,width="5")
+        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        
+        ALARframe = tk.Frame(BFrame)
+        ALARframe.pack(padx=10, pady=5)
+
+        lbConfAlar= tk.Label(ALARframe, text = "CONFIGURACION TIEMPO ENTRE ALARMAS", font=(None,10,'bold'))
+        lbConfAlar.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+        lbIPConfAlar= tk.Label(ALARframe, text = "SEG: ")
+        lbIPConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        teConfAlar = tk.Entry(ALARframe, textvariable = self.lapsoMinAlarma, borderwidth=5,width="20")
+        teConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+
+##        buttonCon = tk.Button(filewinIP,text="GUARDAR CAMBIOS",command = lambda:config_general())
+##        buttonCon.pack(expand=True, pady=10,side = tk.LEFT)
+
+    ################################################################        
+    ################################################################
+    def saveDBConfig(self):
+
+        try:
+            print(self.filewinSDB.winfo_exists())
+            self.filewinSDB.destroy()
+        except:
+            pass
+        
+        self.filewinSDB = tk.Toplevel()
+        self.filewinSDB.resizable (False, False)
+
+        #filewinIP.resizable (False, False)
+        AFrame = tk.Frame(self.filewinSDB)
+        AFrame.pack(padx=10, pady=5,side = tk.LEFT)
+        
+         
+        lbEvent= tk.Label(AFrame, text = "Evento: ")
+        lbEvent.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        self.evetlistCB = tk.StringVar()
+        self.evetlistCB.set("SELECCIONA O EDITA")
+        campEvent = tk.ttk.Combobox(AFrame, textvariable = self.evetlistCB, width=30)
+        campEvent.pack(expand=True, fill=tk.X,side = tk.LEFT)
+
+        BFrame = tk.Frame(self.filewinSDB)
         BFrame.pack(padx=10, pady=5,side = tk.RIGHT)
 
         RESPframe = tk.Frame(BFrame)
@@ -863,7 +947,12 @@ class Window(Frame):
         self.bAlarm=tk.Button(fm4,text = btn2m,
                           #width = 12, #self.acho_wg,
                           command=lambda: self.editar_title())
-        self.bAlarm.grid(row=2,column=0, sticky = tk.W,padx=20, pady =10)        
+        self.bAlarm.grid(row=2,column=0, sticky = tk.W,padx=20, pady =10)      
+        
+        self.bSDB=tk.Button(fm4,text = btn3db,
+                          #width = 12, #self.acho_wg,
+                          command=lambda: self.saveDBConfig())
+        self.bSDB.grid(row=3,column=0, sticky = tk.W,padx=20, pady =10)   
  ################################################################ 
     def esperar(self):
         while self.define:
@@ -1490,8 +1579,15 @@ class Window(Frame):
                     #dif_tiempo = (self.tiempoactual - self.tiempoanterior).total_seconds()
                     self.tiempoactual = time.time()
                     
-                    dif_tiempo_save = 
+                    ### guardando valores en db
+                    try:                           
+                        self.hiloSave = threading.Thread(target=self.esperarSave)
+                        self.hiloSave .start()
+
+                    except Exception:
+                        showerror(title="ERROR",message="error guardar DB")  
                     
+                    ##### verificando alarma
                     dif_tiempo = self.tiempoactual - self.tiempoanterior
                                         
                     if (dif_tiempo >= int(self.lapsoMinAlarma.get())):
@@ -1543,17 +1639,17 @@ class Window(Frame):
                         if(valor != '-/-'):
                             a = valor.split('/')
                             
-                            valor = int(a[0])
+                            valor2 = int(a[0])
                             if(valor > int(self.presionSisMax.get())):
-                                self.alarma('PRESION SIST. MÁXIMO', str(valor+'/'+int(a[1])))
+                                self.alarma('PRESION SIST. MÁXIMO', valor)
                             elif (valor < int(self.presionSisMin.get())):
-                                self.alarma('PRESION SIST. MÍNIMO', st(valor+'/'+int(a[1])))
+                                self.alarma('PRESION SIST. MÍNIMO', valor)
 
-                            valor = int(a[1])
+                            valor2 = int(a[1])
                             if(valor > int(self.presionDiaMax.get())):
-                                self.alarma('PRESION DIAST. MÁXIMO',str(int(a[0]) +'/'+valor))
+                                self.alarma('PRESION DIAST. MÁXIMO',valor)
                             elif (valor < int(self.presionDiaMin.get())):
-                                self.alarma('PRESION DIAST. MÍNIMO',str(int(a[0]) +'/'+valor))
+                                self.alarma('PRESION DIAST. MÍNIMO',valor)
 
 
         
@@ -1567,7 +1663,21 @@ class Window(Frame):
                 return 'salir'
         
         return 'fin'
-    
+ ################################################################ 
+    def esperarSave(self):
+        time.sleep(5)
+        temp = self.temp_val.get()
+        #self.pulso_val.get()
+        ekg = self.hr_val.get()
+        spo = self.spo_val.get()
+        #self.resp_val.get()
+        presion = self.presion_val.get()
+        
+        # Aadir alarmas y registros al paciente actual
+        db.add_ekg(paciente.id, ekg)
+        db.add_presion(paciente.id, presion)
+        db.add_temperatura(paciente.id, temp)
+        db.add_spo2(paciente.id, spo)
     ################################################################                    
     def fireConexion(self):
 
