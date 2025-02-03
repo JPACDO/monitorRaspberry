@@ -33,6 +33,7 @@ import time
 from tkinter import messagebox as MessageBox
 import sys
 
+from hospital_db import HospitalDB
 #---------End of imports
 ####2_2 voy a oprobar a recibir dato de 1 en 1
 ####2_3 dos seriales
@@ -1488,49 +1489,53 @@ class Window(Frame):
                     #self.tiempoactual = datetime.now()
                     #dif_tiempo = (self.tiempoactual - self.tiempoanterior).total_seconds()
                     self.tiempoactual = time.time()
+                    
+                    dif_tiempo_save = 
+                    
                     dif_tiempo = self.tiempoactual - self.tiempoanterior
+                                        
                     if (dif_tiempo >= int(self.lapsoMinAlarma.get())):
 
                         valor = self.temp_val.get()
                         if(valor != '-'):
                             valor = int(valor)
                             if(valor > int(self.tempMax.get())):
-                                self.alarma('TEMPERATURA MÁXIMO')
+                                self.alarma('TEMPERATURA MÁXIMO', valor)
                             elif (valor < int(self.tempMin.get())):
-                                self.alarma('TEMPERATURA MÍNIMO')
+                                self.alarma('TEMPERATURA MÍNIMO', valor)
                             
                         valor = self.pulso_val.get()
                         if(valor != '-'):
                             valor = int(valor)
                             if(valor > int(self.pulsoMax.get())):
                                 #print('alarrma')
-                                self.alarma('PULSO MÁXIMO')
+                                self.alarma('PULSO MÁXIMO', valor)
                             elif (valor < int(self.pulsoMin.get())):
-                                self.alarma('PULSO MÍNIMO')
+                                self.alarma('PULSO MÍNIMO', valor)
                             
                         valor = self.hr_val.get()
                         if(valor != '-'):
                             valor = int(valor)
                             if(valor > int(self.hrMax.get())):
-                                self.alarma('HR MÁXIMO')
+                                self.alarma('HR MÁXIMO', valor)
                             elif (valor < int(self.hrMin.get())):
-                                self.alarma('HR MÍNIMO')
+                                self.alarma('HR MÍNIMO', valor)
 
                         valor = self.spo_val.get()
                         if(valor != '-'):
                             valor = int(valor)                    
                             if(valor > int(self.spoMax.get())):
-                                self.alarma('SPO MÁXIMO')
+                                self.alarma('SPO MÁXIMO', valor)
                             elif (valor < int(self.spoMin.get())):
-                                self.alarma('SPO MÍNIMO')
+                                self.alarma('SPO MÍNIMO', valor)
                             
                         valor = self.resp_val.get()
                         if(valor != '-'):
                             valor = int(valor)
                             if(valor > int(self.respMax.get())):
-                                self.alarma('RESPIRACIÓN MÁXIMO')
+                                self.alarma('RESPIRACIÓN MÁXIMO', valor)
                             elif (valor < int(self.respMin.get())):
-                                self.alarma('RESPIRACIÓN MÍNIMO')
+                                self.alarma('RESPIRACIÓN MÍNIMO', valor)
 
 
 
@@ -1540,19 +1545,20 @@ class Window(Frame):
                             
                             valor = int(a[0])
                             if(valor > int(self.presionSisMax.get())):
-                                self.alarma('PRESION SIST. MÁXIMO')
+                                self.alarma('PRESION SIST. MÁXIMO', str(valor+'/'+int(a[1])))
                             elif (valor < int(self.presionSisMin.get())):
-                                self.alarma('PRESION SIST. MÍNIMO')
+                                self.alarma('PRESION SIST. MÍNIMO', st(valor+'/'+int(a[1])))
 
                             valor = int(a[1])
                             if(valor > int(self.presionDiaMax.get())):
-                                self.alarma('PRESION DIAST. MÁXIMO')
+                                self.alarma('PRESION DIAST. MÁXIMO',str(int(a[0]) +'/'+valor))
                             elif (valor < int(self.presionDiaMin.get())):
-                                self.alarma('PRESION DIAST. MÍNIMO')
+                                self.alarma('PRESION DIAST. MÍNIMO',str(int(a[0]) +'/'+valor))
 
 
         
                 #time.sleep(0.001)
+                
                 
             except Exception as e:
                 print(e)
@@ -1572,7 +1578,7 @@ class Window(Frame):
         except Exception:
             showerror(title="ERROR",message="error conexion  firebase")  
    ################################################################
-    def alarma(self, mensaje):
+    def alarma(self, mensaje, valor):
 ##        try:
 ##            print('jjjjjjjj')
 ##            print(self.filewinA.winfo_exists())
@@ -1592,6 +1598,9 @@ class Window(Frame):
 
             lbConfIzq= tk.Label(IZQframe, text = mensaje, font=(None,10,'bold'))
             lbConfIzq.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
+            
+            ## AGREGANDO ALARMA A ALA DB
+            db.add_alarma(paciente.id, mensaje, valor)
 
             #button = Button(IZQframe, text="CERRAR", command=self.filewinA.destroy)
             button = Button(IZQframe, text="CERRAR", command= lambda:self.cerrar_ventana())
@@ -1613,6 +1622,7 @@ class Window(Frame):
                 buzzer.on()
         
     ################################################################
+    # CIERRA VENTANA DE ALARMA
     def cerrar_ventana(self):
         self.filewinA.destroy()
         self.tiempoanterior = time.time() ##tiempo entre alarmas
@@ -1630,6 +1640,16 @@ root.geometry("1000x500")
 root.resizable (False, False)
 ipIn = input('Enter IP server:') or ""
 portIN = int(input("Enter the port: ") or "1234")
+
+# Crear una instancia de la base de datos
+db = HospitalDB()
+# Obtener el paciente actual (el ultimo o 'Nuevo Paciente')
+paciente = db.paciente
+
+# Anadir identificacion al paciente actual si es 'Nuevo Paciente'
+if paciente.nombre == 'Nuevo Paciente':
+    db.update_paciente(paciente.id, identificacion='123456')
+    
 app = Window(root, puertos = puertos,FONDO = FONDO, TEXTCOL = TEXTCOL,
              ip = ipIn, port = portIN )
 app.config(bg= FONDO)
