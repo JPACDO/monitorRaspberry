@@ -127,6 +127,11 @@ class Window(Frame):
 
         self.ip = ip
         self.port = port
+        
+        self.nombrePaciente = tk.StringVar()
+        self.nombrePaciente.set("")
+        self.dniPaciente = tk.StringVar()
+        self.dniPaciente.set("")
 
         self.hrMin = tk.StringVar()
         self.hrMin.set("50")
@@ -433,18 +438,22 @@ class Window(Frame):
             
         self.campEvent["values"] = pacienteslista
         self.campEvent.bind("<<ComboboxSelected>>", self.paciente_seleccionado)
+        self.nombrePaciente.set(paciente.nombre)
+        self.dniPaciente.set(paciente.identificacion)
             
     def paciente_seleccionado(self,eventObject):
         global paciente
         paciente = self.listapacientes[self.campEvent.current()]
         print(paciente.id)
+        self.nombrePaciente.set(paciente.nombre)
+        self.dniPaciente.set(paciente.identificacion)
         
     def add_paciente(self):
         global paciente
-        paciente = db.create_paciente('45s','2332')
+        paciente = db.create_paciente(self.nombrePaciente.get(),self.dniPaciente.get())
         print('creado:'+str(paciente.id)+'-'+str(paciente.nombre))
         self.lista_paciente_combo()
-        self.evetlistCB.set('')
+        self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)
         
 
     def elimina_paciente(self):
@@ -454,8 +463,16 @@ class Window(Frame):
         
         self.lista_paciente_combo()
         self.evetlistCB.set('')
+        self.nombrePaciente.set('')
+        self.dniPaciente.set('')
         #paciente = db.get_ultimo_paciente()
         
+    def actualiza_paciente(self):
+        global paciente
+        db.update_paciente(paciente.id,self.nombrePaciente.get(),self.dniPaciente.get() )
+        self.evetlistCB.set(paciente.nombre)
+        self.lista_paciente_combo()
+            
     def saveDBConfig(self):
 
         try:
@@ -473,22 +490,40 @@ class Window(Frame):
         
          
         lbEvent= tk.Label(AFrame, text = "Paciente: ")
-        lbEvent.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbEvent.grid( row=0,column=0, pady=5)
         self.evetlistCB = tk.StringVar()
         self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)
         self.campEvent = tk.ttk.Combobox(AFrame, textvariable = self.evetlistCB, width=30)
-        self.campEvent.pack(expand=True, fill=tk.X,side = tk.LEFT)
+        self.campEvent.grid( row=0,column=1, pady=5)
         self.current_paciente_id = paciente.id
         
+        self.nombrePaciente.set(paciente.nombre)
+        self.dniPaciente.set(paciente.identificacion)
+        
+        lbnombrepac= tk.Label(AFrame, text = "NOMBRE: ")
+        lbnombrepac.grid( row=1,column=0, pady=5)
+        tenombrepac = tk.Entry(AFrame, textvariable = self.nombrePaciente, borderwidth=5,width="20")
+        tenombrepac.grid( row=1,column=1, pady=5)      
+        
+        lbdnipac= tk.Label(AFrame, text = "IDENTIFICACION: ")
+        lbdnipac.grid( row=2,column=0, pady=5)
+        tednipac = tk.Entry(AFrame, textvariable = self.dniPaciente, borderwidth=5,width="20")
+        tednipac.grid( row=2,column=1, pady=5)      
+                
+        A2Frame = tk.Frame(AFrame)
+        A2Frame.grid(row=4,column=0, columnspan = 2)
         try: 
             
             self.lista_paciente_combo()
             
-            buttonAdd = tk.Button(AFrame,text="AGREGAR",command = lambda: self.add_paciente())
-            buttonAdd.pack(expand=True, pady=10,side = tk.LEFT)
+            buttonAdd = tk.Button(A2Frame,text="AGREGAR",command = lambda: self.add_paciente())
+            buttonAdd.pack(pady=10,side = tk.RIGHT)
             
-            buttonDel = tk.Button(AFrame,text="ELIMINAR",command = lambda: self.elimina_paciente())
-            buttonDel.pack(expand=True, pady=10,side = tk.LEFT)
+            buttonDel = tk.Button(A2Frame,text="ELIMINAR",command = lambda: self.elimina_paciente())
+            buttonDel.pack(pady=10,side = tk.RIGHT)
+            
+            buttonDel = tk.Button(A2Frame,text="ACTUALIZAR",command = lambda: self.actualiza_paciente())
+            buttonDel.pack(pady=10,side = tk.RIGHT)
         except:
             print("error al obtener datos de eventos")
             print (sys.exc_info())
@@ -500,55 +535,11 @@ class Window(Frame):
         RESPframe = tk.Frame(BFrame)
         RESPframe.pack(padx=10, pady=5)
 
-        lbConfDer= tk.Label(RESPframe, text = "CONFIGURACION RESP", font=(None,10,'bold'))
-        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
         lbIPDer= tk.Label(RESPframe, text = "MIN: ")
         lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
         teIPDer = tk.Entry(RESPframe, textvariable = self.respMin, borderwidth=5,width="20")
         teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        lbPortDer= tk.Label(RESPframe, text = "MAX: ")
-        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        tePortDer = tk.Entry(RESPframe, textvariable = self.respMax, borderwidth=5,width="5")
-        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
         
-        SISframe = tk.Frame(BFrame)
-        SISframe.pack(padx=10, pady=5)
-
-        lbConfDer= tk.Label(SISframe, text = "CONFIGURACION PRESION SISTOLICA", font=(None,10,'bold'))
-        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
-        lbIPDer= tk.Label(SISframe, text = "MIN: ")
-        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        teIPDer = tk.Entry(SISframe, textvariable = self.presionSisMin, borderwidth=5,width="20")
-        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        lbPortDer= tk.Label(SISframe, text = "MAX: ")
-        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        tePortDer = tk.Entry(SISframe, textvariable = self.presionSisMax, borderwidth=5,width="5")
-        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-
-        DIAframe = tk.Frame(BFrame)
-        DIAframe.pack(padx=10, pady=5)
-
-        lbConfDer= tk.Label(DIAframe, text = "CONFIGURACION PRESION DIASTOLICA", font=(None,10,'bold'))
-        lbConfDer.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
-        lbIPDer= tk.Label(DIAframe, text = "MIN: ")
-        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        teIPDer = tk.Entry(DIAframe, textvariable = self.presionDiaMin, borderwidth=5,width="20")
-        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        lbPortDer= tk.Label(DIAframe, text = "MAX: ")
-        lbPortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        tePortDer = tk.Entry(DIAframe, textvariable = self.presionDiaMax, borderwidth=5,width="5")
-        tePortDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        
-        ALARframe = tk.Frame(BFrame)
-        ALARframe.pack(padx=10, pady=5)
-
-        lbConfAlar= tk.Label(ALARframe, text = "CONFIGURACION TIEMPO ENTRE ALARMAS", font=(None,10,'bold'))
-        lbConfAlar.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
-        lbIPConfAlar= tk.Label(ALARframe, text = "SEG: ")
-        lbIPConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        teConfAlar = tk.Entry(ALARframe, textvariable = self.lapsoMinAlarma, borderwidth=5,width="20")
-        teConfAlar.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-
 ##        buttonCon = tk.Button(filewinIP,text="GUARDAR CAMBIOS",command = lambda:config_general())
 ##        buttonCon.pack(expand=True, pady=10,side = tk.LEFT)
 
