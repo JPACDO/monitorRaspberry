@@ -424,6 +424,38 @@ class Window(Frame):
 
     ################################################################        
     ################################################################
+    def lista_paciente_combo(self):
+        self.listapacientes =db.get_pacientes()
+        self.listapacientes.reverse()
+        pacienteslista = []
+        for i in self.listapacientes:
+            pacienteslista.append(i.nombre +'-'+i.identificacion)
+            
+        self.campEvent["values"] = pacienteslista
+        self.campEvent.bind("<<ComboboxSelected>>", self.paciente_seleccionado)
+            
+    def paciente_seleccionado(self,eventObject):
+        global paciente
+        paciente = self.listapacientes[self.campEvent.current()]
+        print(paciente.id)
+        
+    def add_paciente(self):
+        global paciente
+        paciente = db.create_paciente('45s','2332')
+        print('creado:'+str(paciente.id)+'-'+str(paciente.nombre))
+        self.lista_paciente_combo()
+        self.evetlistCB.set('')
+        
+
+    def elimina_paciente(self):
+        global paciente
+        print('elimina:'+str(paciente.id))
+        db.delete_paciente(paciente.id)
+        
+        self.lista_paciente_combo()
+        self.evetlistCB.set('')
+        #paciente = db.get_ultimo_paciente()
+        
     def saveDBConfig(self):
 
         try:
@@ -440,12 +472,27 @@ class Window(Frame):
         AFrame.pack(padx=10, pady=5,side = tk.LEFT)
         
          
-        lbEvent= tk.Label(AFrame, text = "Evento: ")
+        lbEvent= tk.Label(AFrame, text = "Paciente: ")
         lbEvent.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
         self.evetlistCB = tk.StringVar()
-        self.evetlistCB.set("SELECCIONA O EDITA")
-        campEvent = tk.ttk.Combobox(AFrame, textvariable = self.evetlistCB, width=30)
-        campEvent.pack(expand=True, fill=tk.X,side = tk.LEFT)
+        self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)
+        self.campEvent = tk.ttk.Combobox(AFrame, textvariable = self.evetlistCB, width=30)
+        self.campEvent.pack(expand=True, fill=tk.X,side = tk.LEFT)
+        self.current_paciente_id = paciente.id
+        
+        try: 
+            
+            self.lista_paciente_combo()
+            
+            buttonAdd = tk.Button(AFrame,text="AGREGAR",command = lambda: self.add_paciente())
+            buttonAdd.pack(expand=True, pady=10,side = tk.LEFT)
+            
+            buttonDel = tk.Button(AFrame,text="ELIMINAR",command = lambda: self.elimina_paciente())
+            buttonDel.pack(expand=True, pady=10,side = tk.LEFT)
+        except:
+            print("error al obtener datos de eventos")
+            print (sys.exc_info())
+            showerror(title="ERROR",message="error al obtener datos de eventos\n" + str(sys.exc_info()))
 
         BFrame = tk.Frame(self.filewinSDB)
         BFrame.pack(padx=10, pady=5,side = tk.RIGHT)

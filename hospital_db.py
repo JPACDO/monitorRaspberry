@@ -16,6 +16,7 @@ class Paciente(Base):
     presion = relationship('Presion', back_populates='paciente')
     temperatura = relationship('Temperatura', back_populates='paciente')
     spo2 = relationship('SpO2', back_populates='paciente')
+    
 
 class Alarma(Base):
     __tablename__ = 'alarmas'
@@ -149,5 +150,6 @@ class HospitalDB:
 
     def get_ultimo_paciente(self):
         return self.session.query(Paciente).order_by(desc(Paciente.id)).first()
-        
+    
+    
         
