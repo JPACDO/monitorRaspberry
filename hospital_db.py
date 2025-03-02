@@ -23,7 +23,7 @@ class Alarma(Base):
     id = Column(Integer, primary_key=True)
     tipo = Column(String)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow)
+    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='alarmas')
@@ -32,7 +32,7 @@ class EKG(Base):
     __tablename__ = 'ekg'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow)
+    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='ekg')
@@ -41,7 +41,7 @@ class Presion(Base):
     __tablename__ = 'presion'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow)
+    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='presion')
@@ -50,7 +50,7 @@ class Temperatura(Base):
     __tablename__ = 'temperatura'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow)
+    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='temperatura')
@@ -59,7 +59,7 @@ class SpO2(Base):
     __tablename__ = 'spo2'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow)
+    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='spo2')

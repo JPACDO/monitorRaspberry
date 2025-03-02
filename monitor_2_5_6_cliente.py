@@ -473,6 +473,31 @@ class Window(Frame):
         self.evetlistCB.set(paciente.nombre)
         self.lista_paciente_combo()
             
+    def data_saved_seleccionado(self,eventObject):
+        global paciente
+        
+        seleccion = self.list_t_datos.current()
+        
+        if (seleccion == 0):
+            tabla = db.get_ekgs(paciente.id)
+            print(tabla)
+            # Insertar algunas filas como ejemplo
+            for i in tabla:  # Cambia el rango segun la cantidad de filas de ejemplo que quieras agregar
+                self.table.insert("", tk.END, values=(f"{i.id}", f"{i.valor}", f"{i.fecha_hora}"))
+                
+        elif (seleccion == 1):
+            tabla = db.get_spo2s(paciente.id)
+            print('spo')
+        elif (seleccion == 2):
+            tabla = db.get_temperaturas(paciente.id)
+            print('temp')
+        elif (seleccion == 3):
+            tabla = db.get_presiones(paciente.id)
+            print('presion')
+        elif (seleccion == 4):
+            tabla = db.get_alarmas(paciente.id)
+            print('alarma')    
+            
     def saveDBConfig(self):
 
         try:
@@ -532,14 +557,44 @@ class Window(Frame):
         BFrame = tk.Frame(self.filewinSDB)
         BFrame.pack(padx=10, pady=5,side = tk.RIGHT)
 
-        RESPframe = tk.Frame(BFrame)
-        RESPframe.pack(padx=10, pady=5)
+        Tipoframe = tk.Frame(BFrame)
+        Tipoframe.pack(padx=10, pady=5)
 
-        lbIPDer= tk.Label(RESPframe, text = "MIN: ")
-        lbIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
-        teIPDer = tk.Entry(RESPframe, textvariable = self.respMin, borderwidth=5,width="20")
-        teIPDer.pack(expand=True, fill=tk.BOTH,side = tk.LEFT)
+        lbTipoDb= tk.Label(Tipoframe, text = "Parámetro: ")
+        lbTipoDb.grid( row=0,column=0, pady=5)
+        self.list_t_datos = tk.ttk.Combobox(Tipoframe,state="readonly", width=30)
         
+        lista_tipos_datos = ['ritmo cardiaco', 'spo', 'temperatura','presión', 'alarmas']
+        self.list_t_datos["values"] = lista_tipos_datos
+        self.list_t_datos.bind("<<ComboboxSelected>>", self.data_saved_seleccionado)
+        self.list_t_datos.grid( row=0,column=1, pady=5)
+        
+        Tablaframe = tk.Frame(BFrame)
+        Tablaframe.pack(padx=10, pady=5)
+
+        # Crear un scrollbar vertical
+        scrollbar = tk.Scrollbar(Tablaframe, orient=tk.VERTICAL)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Crear el Treeview (tabla) con 3 columnas
+        columns = (" ", "valor", "fecha/hora")
+        columns_size = (100,100,200)
+        self.table = ttk.Treeview(Tablaframe, columns=columns, show="headings", yscrollcommand=scrollbar.set)
+
+        # Configurar el scrollbar para que funcione con el Treeview
+        scrollbar.config(command=self.table.yview)
+
+        # Configurar encabezados de las columnas
+        i_c = 0
+        for col in columns:
+            self.table.heading(col, text=col)
+            self.table.column(col, width=columns_size[i_c])  # Ajustar el ancho de cada columna
+            i_c += 1
+
+        # Agregar la tabla al marco
+        self.table.pack(fill=tk.BOTH, expand=1)
+
+    
 ##        buttonCon = tk.Button(filewinIP,text="GUARDAR CAMBIOS",command = lambda:config_general())
 ##        buttonCon.pack(expand=True, pady=10,side = tk.LEFT)
 
