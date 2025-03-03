@@ -458,7 +458,9 @@ class Window(Frame):
     def add_paciente(self):
         global paciente
         if(self.tiempoGuardado.get().isdigit() ):
+            print(paciente)
             paciente = db.create_paciente(self.nombrePaciente.get(),self.dniPaciente.get(),self.tiempoGuardado.get() )
+            print(paciente)
             print('creado:'+str(paciente.id)+'-'+str(paciente.nombre))
             self.lista_paciente_combo()
             self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)

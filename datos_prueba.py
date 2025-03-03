@@ -36,6 +36,6 @@ while 1:
         clientsocket.send(msg)
         clientsocket.close()
     
-        time.sleep(0.500)
+        time.sleep(0.050)
     except Exception as e:
         print(e)

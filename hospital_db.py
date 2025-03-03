@@ -87,6 +87,8 @@ class HospitalDB:
             paciente = Paciente(nombre=nombre, identificacion=identificacion, tiempoGuardado=int(tiempoGuardado))
             session.add(paciente)
             session.commit()
+            session.refresh(paciente)
+            print('creado')
             return paciente
 
     def get_paciente(self, paciente_id):
