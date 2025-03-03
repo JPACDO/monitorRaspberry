@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #---------Imports
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg

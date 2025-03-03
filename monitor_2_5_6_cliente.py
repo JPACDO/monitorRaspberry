@@ -1,5 +1,6 @@
-#---------Imports
+#! /usr/bin/python3
 
+#---------Imports
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import tkinter as tk

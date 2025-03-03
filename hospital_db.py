@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+
+
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -92,7 +95,7 @@ class HospitalDB:
 
     def update_paciente(self, paciente_id, nombre=None, identificacion=None, tiempoGuardado=None):
         with self.Session() as session:
-            paciente = self.session.query(Paciente).get(paciente_id)
+            paciente = session.query(Paciente).get(paciente_id)
             if nombre:
                 paciente.nombre = nombre
             if identificacion:
@@ -104,7 +107,7 @@ class HospitalDB:
 
     def delete_paciente(self, paciente_id):
         with self.Session() as session:
-            paciente = self.session.query(Paciente).get(paciente_id)
+            paciente = session.query(Paciente).get(paciente_id)
             session.delete(paciente)
             session.commit()
 
