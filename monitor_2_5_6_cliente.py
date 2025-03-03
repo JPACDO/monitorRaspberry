@@ -54,7 +54,8 @@ puertos = []
 buzzer = Buzzer(17)
 fontSize = 8 # tamano letra cuadros titulos
 fontSize2 = 80 #tamano letra contenido valor del cuadro
-btn1my = 'Conec'
+fontSize3 = 60 #tamano letra para presion
+btn1my = 'Conect'
 btn1mn = 'Desc'
 btn2m = 'Alarm'
 btn3db = 'DB'
@@ -178,6 +179,7 @@ class Window(Frame):
 
 
         self.tiempoanterior = 0
+        self.tiempoanterior2 = 0
         self.tiempoactual = time.time() #datetime.now()
         self.lapsoMinAlarma = tk.StringVar() #30segundos de tiempo minimo entre alarmas
         self.lapsoMinAlarma.set("30")
@@ -484,11 +486,14 @@ class Window(Frame):
         else:
             showerror(title="ERROR",message="lapso solo enteros") 
             
-    def data_saved_seleccionado(self,eventObject):
+    def data_saved_seleccionado(self,eventObject=None):
         global paciente
         
         seleccion = self.list_t_datos.current()
         tabla = []
+        
+        for row in self.table.get_children():
+            self.table.delete(row)
         
         if (seleccion == 0):
             tabla = db.get_ekgs(paciente.id)
@@ -513,7 +518,7 @@ class Window(Frame):
  
         # Insertar algunas filas como ejemplo
         for i in tabla:  # Cambia el rango segun la cantidad de filas de ejemplo que quieras agregar
-            if (i.tipo):
+            if hasattr(i, "tipo"):
                 tipo = i.tipo
             self.table.insert("", tk.END, values=(f"{tipo}", f"{i.valor}", i.fecha_hora.strftime("%H:%M:%S %Y-%m-%d")))
                            
@@ -592,6 +597,9 @@ class Window(Frame):
         self.list_t_datos["values"] = lista_tipos_datos
         self.list_t_datos.bind("<<ComboboxSelected>>", self.data_saved_seleccionado)
         self.list_t_datos.grid( row=0,column=1, pady=5)
+        
+        buttonUpd = tk.Button(Tipoframe,text="Refres.",command = lambda:self.data_saved_seleccionado())
+        buttonUpd.grid( row=0,column=2, pady=15)
         
         Tablaframe = tk.Frame(BFrame)
         Tablaframe.pack(padx=10, pady=5)
@@ -947,8 +955,8 @@ class Window(Frame):
                             justify=tk.LEFT)
         self.labelPRESION.grid(row=0,column=0, rowspan = 1, sticky = tk.W)
         self.labelPRESIONval = Label(fm6_2,textvariable=self.presion_val,
-                                    width=int(self.acho_wg*0.8),
-                                font=(None,fontSize2,'bold'),bg=self.FONDO,
+                                    width=int(self.acho_wg),
+                                font=(None,fontSize3,'bold'),bg=self.FONDO,
                                  fg=self.TEXTCOL,
                                 justify=tk.RIGHT)
         self.labelPRESIONval.grid(row=1, column=0)
@@ -1661,7 +1669,7 @@ class Window(Frame):
                     #print("full msg recvd")
                     #print(full_msg[HEADERSIZE:])
                     leer = pickle.loads(full_msg[self.HEADERSIZE:])
-                    #print(a)
+                    #print(leer)
                     new_msg = True
                     full_msg = b""
                     #print(type(a),type(a[2]))
@@ -1705,68 +1713,68 @@ class Window(Frame):
                         showerror(title="ERROR",message="error guardar DB")  
                     
                     ##### verificando alarma
-                    dif_tiempo = self.tiempoactual - self.tiempoanterior
+                    #dif_tiempo = self.tiempoactual - self.tiempoanterior
                                         
-                    if (dif_tiempo >= int(self.lapsoMinAlarma.get())):
+                    #if (dif_tiempo >= int(self.lapsoMinAlarma.get())):
 
-                        valor = self.temp_val.get()
-                        if(valor != '-'):
-                            valor = int(valor)
-                            if(valor > int(self.tempMax.get())):
-                                self.alarma('TEMPERATURA MÁXIMO', valor)
-                            elif (valor < int(self.tempMin.get())):
-                                self.alarma('TEMPERATURA MÍNIMO', valor)
+                    valor = self.temp_val.get()
+                    if(valor != '-'):
+                        valor = int(valor)
+                        if(valor > int(self.tempMax.get())):
+                            self.alarma('TEMPERATURA MÁXIMO', valor)
+                        elif (valor < int(self.tempMin.get())):
+                            self.alarma('TEMPERATURA MÍNIMO', valor)
                             
-                        valor = self.pulso_val.get()
-                        if(valor != '-'):
-                            valor = int(valor)
-                            if(valor > int(self.pulsoMax.get())):
-                                #print('alarrma')
-                                self.alarma('PULSO MÁXIMO', valor)
-                            elif (valor < int(self.pulsoMin.get())):
-                                self.alarma('PULSO MÍNIMO', valor)
+                    valor = self.pulso_val.get()
+                    if(valor != '-'):
+                        valor = int(valor)
+                        if(valor > int(self.pulsoMax.get())):
+                            #print('alarrma')
+                            self.alarma('PULSO MÁXIMO', valor)
+                        elif (valor < int(self.pulsoMin.get())):
+                            self.alarma('PULSO MÍNIMO', valor)
                             
-                        valor = self.hr_val.get()
-                        if(valor != '-'):
-                            valor = int(valor)
-                            if(valor > int(self.hrMax.get())):
-                                self.alarma('HR MÁXIMO', valor)
-                            elif (valor < int(self.hrMin.get())):
-                                self.alarma('HR MÍNIMO', valor)
+                    valor = self.hr_val.get()
+                    if(valor != '-'):
+                        valor = int(valor)
+                        if(valor > int(self.hrMax.get())):
+                            self.alarma('HR MÁXIMO', valor)
+                        elif (valor < int(self.hrMin.get())):
+                            self.alarma('HR MÍNIMO', valor)
 
-                        valor = self.spo_val.get()
-                        if(valor != '-'):
-                            valor = int(valor)                    
-                            if(valor > int(self.spoMax.get())):
-                                self.alarma('SPO MÁXIMO', valor)
-                            elif (valor < int(self.spoMin.get())):
-                                self.alarma('SPO MÍNIMO', valor)
+                    valor = self.spo_val.get()
+                    if(valor != '-'):
+                        valor = int(valor)                    
+                        if(valor > int(self.spoMax.get())):
+                            self.alarma('SPO MÁXIMO', valor)
+                        elif (valor < int(self.spoMin.get())):
+                            self.alarma('SPO MÍNIMO', valor)
                             
-                        valor = self.resp_val.get()
-                        if(valor != '-'):
-                            valor = int(valor)
-                            if(valor > int(self.respMax.get())):
-                                self.alarma('RESPIRACIÓN MÁXIMO', valor)
-                            elif (valor < int(self.respMin.get())):
-                                self.alarma('RESPIRACIÓN MÍNIMO', valor)
+                    valor = self.resp_val.get()
+                    if(valor != '-'):
+                        valor = int(valor)
+                        if(valor > int(self.respMax.get())):
+                            self.alarma('RESPIRACIÓN MÁXIMO', valor)
+                        elif (valor < int(self.respMin.get())):
+                            self.alarma('RESPIRACIÓN MÍNIMO', valor)
 
 
 
-                        valor = self.presion_val.get()
-                        if(valor != '-/-'):
-                            a = valor.split('/')
+                    valor = self.presion_val.get()
+                    if(valor != '-/-'):
+                        a = valor.split('/')
                             
-                            valor2 = int(a[0])
-                            if(valor > int(self.presionSisMax.get())):
-                                self.alarma('PRESION SIST. MÁXIMO', valor)
-                            elif (valor < int(self.presionSisMin.get())):
-                                self.alarma('PRESION SIST. MÍNIMO', valor)
+                        valor2 = int(a[0])
+                        if(valor2 > int(self.presionSisMax.get())):
+                            self.alarma('PRESION SIST. MÁXIMO', valor)
+                        elif (valor2 < int(self.presionSisMin.get())):
+                            self.alarma('PRESION SIST. MÍNIMO', valor)
 
-                            valor2 = int(a[1])
-                            if(valor > int(self.presionDiaMax.get())):
-                                self.alarma('PRESION DIAST. MÁXIMO',valor)
-                            elif (valor < int(self.presionDiaMin.get())):
-                                self.alarma('PRESION DIAST. MÍNIMO',valor)
+                        valor2 = int(a[1])
+                        if(valor2 > int(self.presionDiaMax.get())):
+                            self.alarma('PRESION DIAST. MÁXIMO',valor)
+                        elif (valor2 < int(self.presionDiaMin.get())):
+                            self.alarma('PRESION DIAST. MÍNIMO',valor)
 
 
         
@@ -1776,25 +1784,35 @@ class Window(Frame):
             except Exception as e:
                 print(e)
                 print('no se fin')
-                sys.exit()
+                #sys.exit()
                 return 'salir'
         
         return 'fin'
  ################################################################ 
     def esperarSave(self):
-        time.sleep(5)
-        temp = self.temp_val.get()
-        #self.pulso_val.get()
-        ekg = self.hr_val.get()
-        spo = self.spo_val.get()
-        #self.resp_val.get()
-        presion = self.presion_val.get()
-        
-        # Aadir alarmas y registros al paciente actual
-        db.add_ekg(paciente.id, ekg)
-        db.add_presion(paciente.id, presion)
-        db.add_temperatura(paciente.id, temp)
-        db.add_spo2(paciente.id, spo)
+        global paciente
+        try:
+            #time.sleep(paciente.tiempoGuardado)
+            dif_tiempo = self.tiempoactual - self.tiempoanterior2
+            if (dif_tiempo < int(paciente.tiempoGuardado)): 
+                return
+                
+            temp = self.temp_val.get()
+            #self.pulso_val.get()
+            ekg = self.hr_val.get()
+            spo = self.spo_val.get()
+            #self.resp_val.get()
+            presion = self.presion_val.get()
+            
+            # Aadir alarmas y registros al paciente actual
+            db.add_ekg(paciente.id, ekg)
+            db.add_presion(paciente.id, presion)
+            db.add_temperatura(paciente.id, temp)
+            db.add_spo2(paciente.id, spo)
+            
+            self.tiempoanterior2 = time.time()
+        except Exception as e:
+                print(e)
     ################################################################                    
     def fireConexion(self):
 
@@ -1812,9 +1830,18 @@ class Window(Frame):
 ##            print('kkkkkkkkk')
 ##             #self.filewinA.destroy()
 ##        except:
+    
+        db.add_alarma(paciente.id, mensaje, str(valor))
+        
+        dif_tiempo = self.tiempoactual - self.tiempoanterior
+        if (dif_tiempo < int(self.lapsoMinAlarma.get())):
+            return
+            
         if  not(self.filewinA.winfo_exists())  :
         
             self.filewinA = tk.Toplevel()
+            self.filewinA.protocol("WM_DELETE_WINDOW", self.cerrar_ventana)
+
             #self.filewinA.geometry("400x400")
             self.filewinA.configure(bg='orange')
 
@@ -1823,11 +1850,11 @@ class Window(Frame):
             IZQframe = tk.Frame(self.filewinA)
             IZQframe.pack(padx=150, pady=150)
 
-            lbConfIzq= tk.Label(IZQframe, text = mensaje, font=(None,10,'bold'))
+            lbConfIzq= tk.Label(IZQframe, text = mensaje +'\n'+str(valor), font=(None,10,'bold'))
             lbConfIzq.pack(expand=True, fill=tk.BOTH,padx=10, pady=10)
             
             ## AGREGANDO ALARMA A ALA DB
-            db.add_alarma(paciente.id, mensaje, valor)
+            #db.add_alarma(paciente.id, mensaje, str(valor))
 
             #button = Button(IZQframe, text="CERRAR", command=self.filewinA.destroy)
             button = Button(IZQframe, text="CERRAR", command= lambda:self.cerrar_ventana())
@@ -1853,6 +1880,7 @@ class Window(Frame):
     def cerrar_ventana(self):
         self.filewinA.destroy()
         self.tiempoanterior = time.time() ##tiempo entre alarmas
+        print('cierre alarma')
     ################################################################    
 
 for port in ports :
