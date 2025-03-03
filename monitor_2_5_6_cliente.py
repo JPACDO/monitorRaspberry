@@ -132,7 +132,9 @@ class Window(Frame):
         self.nombrePaciente.set("")
         self.dniPaciente = tk.StringVar()
         self.dniPaciente.set("")
-
+        self.tiempoGuardado = tk.StringVar()
+        self.tiempoGuardado.set("2")
+        
         self.hrMin = tk.StringVar()
         self.hrMin.set("50")
         self.hrMax = tk.StringVar()
@@ -440,6 +442,7 @@ class Window(Frame):
         self.campEvent.bind("<<ComboboxSelected>>", self.paciente_seleccionado)
         self.nombrePaciente.set(paciente.nombre)
         self.dniPaciente.set(paciente.identificacion)
+        self.tiempoGuardado.set(paciente.tiempoGuardado)
             
     def paciente_seleccionado(self,eventObject):
         global paciente
@@ -447,14 +450,17 @@ class Window(Frame):
         print(paciente.id)
         self.nombrePaciente.set(paciente.nombre)
         self.dniPaciente.set(paciente.identificacion)
+        self.tiempoGuardado.set(paciente.tiempoGuardado)
         
     def add_paciente(self):
         global paciente
-        paciente = db.create_paciente(self.nombrePaciente.get(),self.dniPaciente.get())
-        print('creado:'+str(paciente.id)+'-'+str(paciente.nombre))
-        self.lista_paciente_combo()
-        self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)
-        
+        if(self.tiempoGuardado.get().isdigit() ):
+            paciente = db.create_paciente(self.nombrePaciente.get(),self.dniPaciente.get(),self.tiempoGuardado.get() )
+            print('creado:'+str(paciente.id)+'-'+str(paciente.nombre))
+            self.lista_paciente_combo()
+            self.evetlistCB.set(paciente.nombre + '-' + paciente.identificacion)
+        else:
+            showerror(title="ERROR",message="lapso solo enteros")         
 
     def elimina_paciente(self):
         global paciente
@@ -465,39 +471,52 @@ class Window(Frame):
         self.evetlistCB.set('')
         self.nombrePaciente.set('')
         self.dniPaciente.set('')
+        self.tiempoGuardado.set('')
         #paciente = db.get_ultimo_paciente()
         
     def actualiza_paciente(self):
         global paciente
-        db.update_paciente(paciente.id,self.nombrePaciente.get(),self.dniPaciente.get() )
-        self.evetlistCB.set(paciente.nombre)
-        self.lista_paciente_combo()
+        if(self.tiempoGuardado.get().isdigit() ):
+            
+            db.update_paciente(paciente.id,self.nombrePaciente.get(),self.dniPaciente.get(),self.tiempoGuardado.get()  )
+            self.evetlistCB.set(paciente.nombre+ '-' + paciente.identificacion)
+            self.lista_paciente_combo()
+        else:
+            showerror(title="ERROR",message="lapso solo enteros") 
             
     def data_saved_seleccionado(self,eventObject):
         global paciente
         
         seleccion = self.list_t_datos.current()
+        tabla = []
         
         if (seleccion == 0):
             tabla = db.get_ekgs(paciente.id)
-            print(tabla)
-            # Insertar algunas filas como ejemplo
-            for i in tabla:  # Cambia el rango segun la cantidad de filas de ejemplo que quieras agregar
-                self.table.insert("", tk.END, values=(f"{i.id}", f"{i.valor}", f"{i.fecha_hora}"))
-                
+            #print('ekg')
+            tipo = 'heat rate'
         elif (seleccion == 1):
             tabla = db.get_spo2s(paciente.id)
-            print('spo')
+            #print('spo')
+            tipo = 'spo'
         elif (seleccion == 2):
             tabla = db.get_temperaturas(paciente.id)
-            print('temp')
+            #print('temp')
+            tipo = 'temp'
         elif (seleccion == 3):
             tabla = db.get_presiones(paciente.id)
-            print('presion')
+            #print('presion')
+            tipo = 'presion'
         elif (seleccion == 4):
             tabla = db.get_alarmas(paciente.id)
-            print('alarma')    
-            
+            #print('alarma')
+            tipo = 'alarma'    
+ 
+        # Insertar algunas filas como ejemplo
+        for i in tabla:  # Cambia el rango segun la cantidad de filas de ejemplo que quieras agregar
+            if (i.tipo):
+                tipo = i.tipo
+            self.table.insert("", tk.END, values=(f"{tipo}", f"{i.valor}", i.fecha_hora.strftime("%H:%M:%S %Y-%m-%d")))
+                           
     def saveDBConfig(self):
 
         try:
@@ -534,6 +553,11 @@ class Window(Frame):
         lbdnipac.grid( row=2,column=0, pady=5)
         tednipac = tk.Entry(AFrame, textvariable = self.dniPaciente, borderwidth=5,width="20")
         tednipac.grid( row=2,column=1, pady=5)      
+                
+        lblapso= tk.Label(AFrame, text = "LAPSO GUARDADO(seg): ")
+        lblapso.grid( row=3,column=0, pady=5)
+        telapso = tk.Entry(AFrame, textvariable = self.tiempoGuardado, borderwidth=5,width="20")
+        telapso.grid( row=3,column=1, pady=5)  
                 
         A2Frame = tk.Frame(AFrame)
         A2Frame.grid(row=4,column=0, columnspan = 2)
@@ -577,7 +601,7 @@ class Window(Frame):
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Crear el Treeview (tabla) con 3 columnas
-        columns = (" ", "valor", "fecha/hora")
+        columns = ("Tipo", "Valor", "Hora-Fecha")
         columns_size = (100,100,200)
         self.table = ttk.Treeview(Tablaframe, columns=columns, show="headings", yscrollcommand=scrollbar.set)
 

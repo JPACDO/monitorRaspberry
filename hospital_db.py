@@ -9,7 +9,8 @@ class Paciente(Base):
     __tablename__ = 'pacientes'
     id = Column(Integer, primary_key=True)
     nombre = Column(String)
-    identificacion = Column(String)  # Nuevo campo
+    identificacion = Column(String)
+    tiempoGuardado =  Column(Integer, default= 2)
 
     alarmas = relationship('Alarma', back_populates='paciente')
     ekg = relationship('EKG', back_populates='paciente')
@@ -23,7 +24,7 @@ class Alarma(Base):
     id = Column(Integer, primary_key=True)
     tipo = Column(String)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
+    fecha_hora = Column(DateTime, default=datetime.utcnow)
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='alarmas')
@@ -32,7 +33,7 @@ class EKG(Base):
     __tablename__ = 'ekg'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
+    fecha_hora = Column(DateTime, default=datetime.utcnow)
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='ekg')
@@ -41,7 +42,7 @@ class Presion(Base):
     __tablename__ = 'presion'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
+    fecha_hora = Column(DateTime, default=datetime.utcnow)
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='presion')
@@ -50,7 +51,7 @@ class Temperatura(Base):
     __tablename__ = 'temperatura'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
+    fecha_hora = Column(DateTime, default=datetime.utcnow)
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='temperatura')
@@ -59,7 +60,7 @@ class SpO2(Base):
     __tablename__ = 'spo2'
     id = Column(Integer, primary_key=True)
     valor = Column(String)
-    fecha_hora = Column(DateTime, default=datetime.utcnow.strftime("%H:%M:%S %Y-%m-%d"))
+    fecha_hora = Column(DateTime, default=datetime.utcnow)
     paciente_id = Column(Integer, ForeignKey('pacientes.id'))
 
     paciente = relationship('Paciente', back_populates='spo2')
@@ -77,8 +78,8 @@ class HospitalDB:
         if not self.paciente:
             self.paciente = self.create_paciente('Nuevo Paciente')
 
-    def create_paciente(self, nombre, identificacion=None):
-        paciente = Paciente(nombre=nombre, identificacion=identificacion)
+    def create_paciente(self, nombre, identificacion=None, tiempoGuardado=2):
+        paciente = Paciente(nombre=nombre, identificacion=identificacion, tiempoGuardado=int(tiempoGuardado))
         self.session.add(paciente)
         self.session.commit()
         return paciente
@@ -86,12 +87,14 @@ class HospitalDB:
     def get_paciente(self, paciente_id):
         return self.session.query(Paciente).get(paciente_id)
 
-    def update_paciente(self, paciente_id, nombre=None, identificacion=None):
+    def update_paciente(self, paciente_id, nombre=None, identificacion=None, tiempoGuardado=None):
         paciente = self.session.query(Paciente).get(paciente_id)
         if nombre:
             paciente.nombre = nombre
         if identificacion:
             paciente.identificacion = identificacion
+        if tiempoGuardado:
+            paciente.tiempoGuardado = int(tiempoGuardado)
         self.session.commit()
         return paciente
 
